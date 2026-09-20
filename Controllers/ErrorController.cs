@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +6,7 @@ namespace AprilBookStore.Controllers
 {
     public class ErrorController : Controller
     {
-        public ILogger<ErrorController> _logger { get; set; }
+        private readonly ILogger<ErrorController> _logger;
         public ErrorController(ILogger<ErrorController> logger)
         {
             _logger = logger;
@@ -21,7 +21,7 @@ namespace AprilBookStore.Controllers
                 case 404:
                     ViewBag.ErrorMessage="Not Found";
                     ViewBag.StatusCode=statusCode;
-                    _logger.LogWarning($" 404 error path  {statusCodeResult.OriginalPath} query {statusCodeResult.OriginalQueryString}");
+                    _logger.LogWarning($" 404 error path  {statusCodeResult?.OriginalPath} query {statusCodeResult?.OriginalQueryString}");
                     break;
                 default:
                     ViewBag.StatusCode=statusCode;
@@ -32,12 +32,12 @@ namespace AprilBookStore.Controllers
         }
         public IActionResult Error()
         {
-            var exeptionDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+            var exceptionDetails = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
 
-            ViewBag.ExceptionPath = exeptionDetails.Path;
-            ViewBag.ExceptionMessage = exeptionDetails.Error.Message;
-            ViewBag.StackTrace = exeptionDetails.Error.StackTrace;
-            _logger.LogError($"The path {exeptionDetails.Path} thre an exception {exeptionDetails.Error}");
+            ViewBag.ExceptionPath = exceptionDetails?.Path;
+            ViewBag.ExceptionMessage = exceptionDetails?.Error.Message;
+            ViewBag.StackTrace = exceptionDetails?.Error.StackTrace;
+            _logger.LogError($"The path {exceptionDetails?.Path} threw an exception {exceptionDetails?.Error}");
 
             return View("Error");
         }

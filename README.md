@@ -35,7 +35,7 @@ AprilBookStore/
 │
 ├── Controllers/             # Handles HTTP requests and returns views
 │   ├── AdministrationController.cs
-│   ├── AuthorController.cs
+│   ├── AuthorsController.cs
 │   ├── BooksController.cs
 │   ├── CartController.cs
 │   ├── CategoryController.cs
@@ -43,30 +43,28 @@ AprilBookStore/
 │   ├── OrdersController.cs
 │   └── ErrorController.cs
 │
-├── DataAccess/              # Contains database context and repositories
+├── DataAccess/              # Database context and data services
 │   ├── BookStoreContext.cs
-│   ├── IRepository.cs
-│   └── Repository.cs
+│   ├── IData.cs
+│   └── DataContext.cs
 │
-├── ExtensionMethods/        # Utility methods (seed method)
-│   └── ExtensionMethod.cs
+├── Extensions/              # Extension methods (ModelBuilder seeding)
+│   └── ModelBuilderExtensions.cs
 │
 ├── Migrations/              # Database migration files
 │   ├── 20240718145305_Initial.cs
 │   └── BookStoreContextModelSnapshot.cs
 │
-├── Models/                  # Application's data models
+├── Models/                  # Application domain models
 │
-├── Security/                # Security configuration (roles, claims, etc.)
+├── Security/                # Authorization handlers and requirements
 │
-├── ViewModels/              # ViewModel classes for passing data between controllers and views
+├── ViewModels/              # ViewModels for data transfer between controllers and views
 │
 ├── Views/                   # Razor views for rendering HTML pages
 │
-├── appsettings.json         # Application configuration (e.g., connection strings)
-├── Program.cs               # Application entry point
-├── Startup.cs               # Configures services and middleware
-└── ScaffoldingReadMe.txt    # Instructions for scaffolding
+├── appsettings.json         # Application configuration
+└── Program.cs               # Application entry point and service pipeline
 ```
 ## Configuration
 

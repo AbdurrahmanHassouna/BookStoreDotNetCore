@@ -1,4 +1,4 @@
-﻿using AprilBookStore.DataAccess;
+using AprilBookStore.DataAccess;
 using AprilBookStore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -10,52 +10,64 @@ namespace AprilBookStore.Controllers
     [Authorize]
     public class CartController : Controller
     {
-        private readonly IData data;
-        private readonly UserManager<ApplicationUser> userManager;
+        private readonly IData _data;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CartController(IData data, UserManager<ApplicationUser> _userManager)
+        public CartController(IData data, UserManager<ApplicationUser> userManager)
         {
-            this.data = data;
-            userManager=_userManager;
+            _data = data;
+            _userManager=userManager;
         }
         public async Task<IActionResult> Index()
         {
-            var user = await userManager.GetUserAsync(User);
-            var cart = (await data.GetCartItemsAsync()).Where(b => b.User==user).ToList();
+            var userId = _userManager.GetUserId(User);
+            var cart = await _data.GetCartItemsAsync(userId);
             return View(cart);
         }
         [HttpPost]
-        public async Task<int> AddtoCart(int bookId)
+        public async Task<int> AddToCart(int bookId)
         {
-            var book = data.GetBooks().Where(data => data.Id == bookId).First();
-            return (await data.AddToCart(book));
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return 0;
+            var book = _data.GetBook(bookId);
+            if (book == null) return 0;
+            return await _data.AddToCart(userId, book);
         }
         [HttpPost]
-        public async Task<IActionResult> UpdateCart(int bookId, int Quantity)
+        public async Task<IActionResult> UpdateCart(int bookId, int quantity)
         {
-            var user = await userManager.GetUserAsync(User);
-            CartItem cartItem = (await data.GetCartItemsAsync()).Where(b => b.BookId==bookId&&b.User==user).First();
-            if (Quantity == 0)
+            var userId = _userManager.GetUserId(User);
+            var cartItems = await _data.GetCartItemsAsync(userId);
+            var cartItem = cartItems.FirstOrDefault(b => b.BookId == bookId);
+            if (cartItem != null)
             {
-                await data.DeleteCartItem(cartItem);
+                if (quantity == 0)
+                {
+                    await _data.DeleteCartItem(cartItem);
+                }
+                else
+                {
+                    cartItem.Quantity = quantity;
+                    cartItem.Price = cartItem.Quantity * cartItem.Book.Price;
+                    await _data.UpdateCartItem(cartItem);
+                }
             }
-            else
-            {
-                cartItem.Quantity= Quantity;
-                cartItem.Price= cartItem.Quantity*cartItem.Book.Price;
-                await data.UpdateCartItem(cartItem);
-            }
-            var cartItems = await data.GetCartItemsAsync();
-            return PartialView("_Cart", cartItems);
+            var updatedCart = await _data.GetCartItemsAsync(userId);
+            return PartialView("_Cart", updatedCart.ToList());
         }
 
         public async Task<IActionResult> DeleteCartItem(int id)
         {
-            var cartItem = (await data.GetCartItemsAsync()).Where(c => c.BookId==id).FirstOrDefault();
-            await data.DeleteCartItem(cartItem);
-            var cartItems = await data.GetCartItemsAsync();
+            var userId = _userManager.GetUserId(User);
+            var cartItems = await _data.GetCartItemsAsync(userId);
+            var cartItem = cartItems.FirstOrDefault(c => c.BookId == id);
+            if (cartItem != null)
+            {
+                await _data.DeleteCartItem(cartItem);
+            }
+            var updatedCart = await _data.GetCartItemsAsync(userId);
 
-            return PartialView("_Cart", cartItems);
+            return PartialView("_Cart", updatedCart.ToList());
         }
     }
 }

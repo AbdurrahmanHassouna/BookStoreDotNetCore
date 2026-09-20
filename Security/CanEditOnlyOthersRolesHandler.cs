@@ -1,4 +1,4 @@
-﻿using AprilBookStore.Security;
+using AprilBookStore.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -15,11 +15,22 @@ namespace AprilBookStore.Security
             {
                 return Task.CompletedTask;
             }
-            string loggedInAdminId = context.User.Claims.FirstOrDefault(c => c.Type==ClaimTypes.NameIdentifier).Value;
-            string EditedUserId = authFilterContext.HttpContext.Request.Query["id"];
+            var claim = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (claim == null)
+            {
+                return Task.CompletedTask;
+            }
+            string loggedInAdminId = claim.Value;
+
+            string? editedUserId = authFilterContext.HttpContext.Request.Query["id"];
+            if (string.IsNullOrEmpty(editedUserId))
+            {
+                return Task.CompletedTask;
+            }
+
             if (context.User.IsInRole("Admin") &&
                 context.User.HasClaim(claim => claim.Type == "Edit Role" && claim.Value == "true") &&
-                EditedUserId.ToLower() != loggedInAdminId.ToLower())
+                !string.Equals(editedUserId, loggedInAdminId, StringComparison.OrdinalIgnoreCase))
             {
                 context.Succeed(requirement);
             }

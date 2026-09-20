@@ -1,2 +1,17 @@
+## Build and Output Folders
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+## IDE and Editor Files
+.vs/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Secrets and Local Configuration
 secrets.json
-wwwroot
+appsettings.*.local.json

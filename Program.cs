@@ -9,19 +9,15 @@ using AprilBookStore.Security;
 using System.Security.Principal;
 namespace AprilBookStore
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddMvc(options =>
-            {
-                options.EnableEndpointRouting=false;
-               /* var Policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-                options.Filters.Add(new AuthorizeFilter(Policy));*/
-            });
+            builder.Services.AddControllersWithViews();
+            builder.Services.AddRazorPages();
 
-            var connectionString = builder.Configuration.GetConnectionString("AprilBookStoreContextConnection") ?? throw new InvalidOperationException("Connection string 'AprilBookStoreContextConnection' not found.");
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnections") ?? throw new InvalidOperationException("Connection string 'AprilBookStoreContextConnection' not found.");
 
             builder.Services.AddDbContext<BookStoreContext>(options =>
                 options.UseSqlServer(connectionString)
@@ -37,13 +33,13 @@ namespace AprilBookStore
             builder.Services.AddTransient<IAuthorizationHandler, CanEditOnlyOthersRolesHandler>();
             builder.Services.AddTransient<IAuthorizationHandler, SuperAdminHandler>();
 
-            var ClientId = builder.Configuration["ClientId"];
-            var ClientSecret = builder.Configuration["ClientSecret"];
+            var clientId = builder.Configuration["ClientId"];
+            var clientSecret = builder.Configuration["ClientSecret"];
             builder.Services.AddAuthentication()
                 .AddGoogle(options =>
                 {
-                    options.ClientId=ClientId;
-                    options.ClientSecret=ClientSecret;
+                    options.ClientId=clientId;
+                    options.ClientSecret=clientSecret;
                 });
             builder.Services.AddAuthorization(options=> {
                 options.AddPolicy("DeleteRolePolicy", p => p.RequireRole("SuperAdmin"));
@@ -62,8 +58,16 @@ namespace AprilBookStore
             }
 
             app.UseStaticFiles();
+            app.UseRouting();
+
             app.UseAuthentication();
-            app.UseMvcWithDefaultRoute();
+            app.UseAuthorization();
+
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapRazorPages();
+
             app.Run();
         }
     }

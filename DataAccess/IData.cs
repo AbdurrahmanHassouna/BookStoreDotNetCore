@@ -1,4 +1,4 @@
-﻿using AprilBookStore.Controllers;
+using AprilBookStore.Controllers;
 using AprilBookStore.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -10,10 +10,14 @@ namespace AprilBookStore.DataAccess
     {
         ICollection<Book> GetBooks(Author author);
         ICollection<Book> GetBooks();
+        IQueryable<Book> GetBooksQuery();
         Book? GetBook(int  id);
         ICollection<Book> GetBooks(Category category);
         ICollection<Author> GetAuthors();
-        Author GetAuthor(int id);
+        Author? GetAuthor(int id);
+        void AddAuthor(Author author);
+        void UpdateAuthor(Author author);
+        void DeleteAuthor(int id);
         ICollection<Category> GetCategories();
         Category GetCategory(int id);
         void AddCategory(Category category);
@@ -21,12 +25,14 @@ namespace AprilBookStore.DataAccess
         void DeleteCategory(int id);
         Task<ICollection<Book>> SearchBook(string search);
         Task<int> GetCartItemsCountAsync(ClaimsPrincipal claims);
+        Task<int> GetCartItemsCountAsync(string userId);
         Task<ICollection<CartItem>> GetCartItemsAsync();
-        Task<int> AddToCart(Book book);
+        Task<ICollection<CartItem>> GetCartItemsAsync(string userId);
+        Task<int> AddToCart(string userId, Book book);
         Task<int> DeleteCartItem(CartItem cartItem);
         Task<int> UpdateCartItem(CartItem cartItem);
         Task<ICollection<Order>> GetOrders(ClaimsPrincipal claims);
-        Task<Order> GetOrderDetails(int orderId);
+        Task<Order?> GetOrderDetails(int orderId);
         Task<Order> SubmitOrder(string userId);
         void AddBook(Book book);
         void UpdateBook(Book book);

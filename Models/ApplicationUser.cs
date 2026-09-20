@@ -13,7 +13,6 @@ namespace AprilBookStore.Models
         [InverseProperty("User")]
         public ICollection<Order> Orders { get; set; }
         
-        
         [Display(Name = "Birth Date")]
         public DateTime BirthDate { get; set; }
 

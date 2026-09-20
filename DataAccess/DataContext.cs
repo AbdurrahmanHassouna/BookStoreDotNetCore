@@ -10,35 +10,46 @@ namespace AprilBookStore.DataAccess
 {
     public class DataContext : IData
     {
-        private BookStoreContext bookStoreContext;
-        private UserManager<ApplicationUser> userManager;
-        private SignInManager<ApplicationUser> signInManager;
-        public DataContext(BookStoreContext bookStoreContext
-            , UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        private readonly BookStoreContext bookStoreContext;
+
+        public DataContext(BookStoreContext bookStoreContext)
         {
             this.bookStoreContext = bookStoreContext;
-            this.userManager = userManager;
-            this.signInManager = signInManager;
-
-
         }
         public ICollection<Book> GetBooks(Author author)
         {
-           
-            return GetBooks().Where(b=>b.Author == author).ToList();
+            return bookStoreContext.Books
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .Where(b => b.AuthorId == author.Id)
+                .ToList();
         }
         public ICollection<Book> GetBooks()
         {
             var books = bookStoreContext.Books.Include(a => a.Author).Include(a => a.Category).ToList();
             return books;
         }
+        public IQueryable<Book> GetBooksQuery()
+        {
+            return bookStoreContext.Books.AsNoTracking()
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .AsQueryable();
+        }
         public ICollection<Book> GetBooks(Category category)
         {
-            return GetBooks().Where(b => b.Category == category).ToList();
+            return bookStoreContext.Books.AsNoTracking()
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .Where(b => b.CategoryId == category.Id)
+                .ToList();
         }
-        public Book? GetBook(int id) {
-            var book = GetBooks().Where(c=>c.Id==id).FirstOrDefault();
-            return book;
+        public Book? GetBook(int id)
+        {
+            return bookStoreContext.Books
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .FirstOrDefault(b => b.Id == id);
         }
         public async Task<ICollection<Book>> SearchBook(string search)
         {
@@ -49,7 +60,7 @@ namespace AprilBookStore.DataAccess
 
             var searchTerm = search.Trim();
 
-            var result = await bookStoreContext.Books
+            var result = await bookStoreContext.Books.AsNoTracking()
                 .Include(a => a.Author)
                 .Include(a => a.Category)
                 .Where(b => EF.Functions.Like(b.Name, $"%{searchTerm}%"))
@@ -61,47 +72,62 @@ namespace AprilBookStore.DataAccess
 
         public async Task<int> GetCartItemsCountAsync(ClaimsPrincipal claims)
         {
-            var user = await userManager.GetUserAsync(claims);
-            return (await GetCartItemsAsync()).Where(c=>c.User==user).Count();
-
+            var userId = claims.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return 0;
+            return await GetCartItemsCountAsync(userId);
         }
+
+        public async Task<int> GetCartItemsCountAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return 0;
+            return await bookStoreContext.CartItems
+                .Where(c => c.UserId == userId)
+                .SumAsync(c => (int?)c.Quantity) ?? 0;
+        }
+
         public async Task<ICollection<CartItem>> GetCartItemsAsync()
         {
-            
-            var cartItems = bookStoreContext.CartItems
-                .Include(C => C.User).Include(C => C.Book).ToList();
+            var cartItems = await bookStoreContext.CartItems
+                .Include(c => c.User).Include(c => c.Book).ToListAsync();
 
             return cartItems;
         }
-        public async Task<int> AddToCart(Book book)
-        {
-            var user = await userManager.GetUserAsync(signInManager.Context.User);
 
-            var cartItems = bookStoreContext.CartItems.Where(c => c.BookId==book.Id&&c.UserId==user.Id);
-            
-            if (cartItems.Count()!=0)
+        public async Task<ICollection<CartItem>> GetCartItemsAsync(string userId)
+        {
+            return await bookStoreContext.CartItems
+                .Where(c => c.UserId == userId)
+                .Include(c => c.Book)
+                .ToListAsync();
+        }
+
+        public async Task<int> AddToCart(string userId, Book book)
+        {
+            var cartItems = bookStoreContext.CartItems.Where(c => c.BookId == book.Id && c.UserId == userId);
+
+            if (cartItems.Count() != 0)
             {
-                var cartItem = cartItems.Where(b => b.BookId==book.Id).First();
-                if (cartItem != null && cartItem.Quantity<book.QuantityInStock) { 
-                cartItem.Quantity= cartItem.Quantity+1;
-                cartItem.Price+=book.Price;
-                await UpdateCartItem(cartItem);
+                var cartItem = cartItems.First(b => b.BookId == book.Id);
+                if (cartItem.Quantity < book.QuantityInStock)
+                {
+                    cartItem.Quantity = cartItem.Quantity + 1;
+                    cartItem.Price += book.Price;
+                    await UpdateCartItem(cartItem);
                 }
-                return await GetCartItemsCountAsync(signInManager.Context.User);
+                return await GetCartItemsCountAsync(userId);
             }
+
             var newCartItem = new CartItem
             {
                 BookId = book.Id,
-                Quantity =1,
-                UserId = (await userManager.GetUserAsync(signInManager.Context.User)).Id,
+                Quantity = 1,
+                UserId = userId,
                 Price = book.Price
-
             };
 
             await bookStoreContext.AddAsync(newCartItem);
             await bookStoreContext.SaveChangesAsync();
-            return await GetCartItemsCountAsync(signInManager.Context.User);
-
+            return await GetCartItemsCountAsync(userId);
         }
         public async Task<int> DeleteCartItem(CartItem cartItem)
         {
@@ -120,9 +146,10 @@ namespace AprilBookStore.DataAccess
             var Orders = bookStoreContext.Orders.Where(o => o.UserId==claims.FindFirstValue(ClaimTypes.NameIdentifier)).ToList();
             return Orders;
         }
-        public async Task<Order> GetOrderDetails(int Id)
+        public async Task<Order?> GetOrderDetails(int id)
         {
-            Order order = await bookStoreContext.Orders.Where(o=>o.Id==Id).Include(o=>o.OrderItems).FirstOrDefaultAsync();
+            Order? order = await bookStoreContext.Orders.Where(o=>o.Id==id).Include(o=>o.OrderItems).FirstOrDefaultAsync();
+
             return order;
         }
         public async Task<Order>? SubmitOrder(string UserId)
@@ -159,11 +186,30 @@ namespace AprilBookStore.DataAccess
         }
         public ICollection<Author> GetAuthors()
         {
-            return bookStoreContext.Authors.ToList();
+            return bookStoreContext.Authors.Include(a => a.Books).ToList();
         }
-        public Author GetAuthor(int id)
+        public Author? GetAuthor(int id)
         {
-            return bookStoreContext.Authors.Where(a=>a.Id==id).FirstOrDefault();
+            return bookStoreContext.Authors.Include(a => a.Books).FirstOrDefault(a => a.Id == id);
+        }
+        public void AddAuthor(Author author)
+        {
+            bookStoreContext.Authors.Add(author);
+            bookStoreContext.SaveChanges();
+        }
+        public void UpdateAuthor(Author author)
+        {
+            bookStoreContext.Authors.Update(author);
+            bookStoreContext.SaveChanges();
+        }
+        public void DeleteAuthor(int id)
+        {
+            var author = bookStoreContext.Authors.Find(id);
+            if (author != null)
+            {
+                bookStoreContext.Authors.Remove(author);
+                bookStoreContext.SaveChanges();
+            }
         }
         public ICollection<Category> GetCategories()
         {
@@ -194,7 +240,7 @@ namespace AprilBookStore.DataAccess
         }
         public void AddBook(Book book) {
             bookStoreContext.Books.Add(book);
-            bookStoreContext.SaveChangesAsync().Wait();
+            bookStoreContext.SaveChanges();
         }
         public void UpdateBook(Book book)
         {
