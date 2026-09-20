@@ -1,0 +1,38 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Log out";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-box-arrow-right text-primary fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-2">@ViewData["Title"]</h3>
+                @{
+                    if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <p class="text-muted mb-4">Are you sure you want to log out of your account?</p>
+                        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg">Log Out</button>
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-4">You have successfully logged out of the application.</p>
+                        <div class="d-grid gap-2">
+                            <a asp-page="./Login" class="btn btn-primary btn-lg">Sign in Again</a>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Return to Home</a>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

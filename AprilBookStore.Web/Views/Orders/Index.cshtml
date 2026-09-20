@@ -1,0 +1,86 @@
+@model IEnumerable<OrderListItemViewModel>
+
+@{
+    ViewBag.Title = "My Orders";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-bag-check me-2 text-primary"></i>My Orders</h2>
+            <p class="text-muted mb-0">View and track your previous book orders.</p>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            <i class="bi bi-book me-1"></i> Browse Books
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <div class="card-body py-5">
+                <div class="mb-3">
+                    <i class="bi bi-box2 text-muted" style="font-size: 3.5rem;"></i>
+                </div>
+                <h4 class="fw-semibold text-dark">No Orders Placed Yet</h4>
+                <p class="text-muted mb-4">You haven't placed any orders yet. Discover books you love in our curated catalog!</p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-shop me-1"></i> Start Shopping
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Order ID</th>
+                            <th scope="col" class="py-3">Date</th>
+                            <th scope="col" class="py-3">Items</th>
+                            <th scope="col" class="py-3">Total Amount</th>
+                            <th scope="col" class="py-3">Status</th>
+                            <th scope="col" class="text-end pe-4 py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="font-monospace text-muted small" title="@item.Id">
+                                        #@item.Id.ToString().Substring(0, 8).ToUpper()
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-dark fw-medium">@item.OrderDate.ToString("MMM dd, yyyy")</span>
+                                    <div class="text-muted small">@item.OrderDate.ToString("hh:mm tt")</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1.5">
+                                        <i class="bi bi-box-seam me-1"></i>@item.ItemCount @(item.ItemCount == 1 ? "item" : "items")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary fs-6">$@item.TotalAmount.ToString("N2")</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1.5">
+                                        <i class="bi bi-check2 me-1"></i>Completed
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        <i class="bi bi-eye me-1"></i>View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

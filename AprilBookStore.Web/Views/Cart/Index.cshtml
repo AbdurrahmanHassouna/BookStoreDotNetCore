@@ -1,0 +1,20 @@
+@model AprilBookStore.Web.ViewModels.Cart.CartViewModel
+
+@{
+    ViewBag.Title = "Cart";
+}
+
+<div class="container my-4">
+    @if (TempData["CartError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Order could not be completed:</strong> @TempData["CartError"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div id="Cart">
+        @await Html.PartialAsync("_Cart", Model)
+    </div>
+</div>

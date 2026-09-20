@@ -1,0 +1,176 @@
+/* ==========================================================================
+   Design Tokens & Modern CSS Variables
+   ========================================================================== */
+:root {
+  --body-bg: #f8fafc;
+  --brand-primary: #4f46e5;
+  --brand-primary-hover: #4338ca;
+  --brand-secondary: #64748b;
+  --card-border: #e2e8f0;
+  --card-bg: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* ==========================================================================
+   Base Layout
+   ========================================================================== */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  background-color: var(--body-bg, #f8fafc);
+  color: var(--text-main, #1e293b);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+main {
+  flex-grow: 1;
+}
+
+/* ==========================================================================
+   Typography & Links
+   ========================================================================== */
+a {
+  color: var(--brand-primary, #4f46e5);
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  color: var(--brand-primary-hover, #4338ca);
+}
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ==========================================================================
+   Buttons & Inputs
+   ========================================================================== */
+.btn-primary {
+  color: #fff;
+  background-color: var(--brand-primary, #4f46e5);
+  border-color: var(--brand-primary, #4f46e5);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  color: #fff;
+  background-color: var(--brand-primary-hover, #4338ca) !important;
+  border-color: var(--brand-primary-hover, #4338ca) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--brand-primary, #4f46e5);
+  box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: var(--brand-primary, #4f46e5);
+  border-color: var(--brand-primary, #4f46e5);
+}
+
+.btn-link.nav-link:focus {
+  outline: black auto 1px;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer {
+  width: 100%;
+  background-color: #ffffff;
+  border-top: 1px solid var(--card-border, #e2e8f0);
+  color: var(--text-muted, #64748b);
+  padding: 1.25rem 0;
+}
+
+/* ==========================================================================
+   Card Hover Elevation & Utility Classes
+   ========================================================================== */
+.hover-shadow {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-shadow:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.book-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: var(--card-bg, #ffffff);
+}
+
+.book-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ==========================================================================
+   Badges, Tables, & Utilities
+   ========================================================================== */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  padding: 0.35em 0.65em;
+}
+
+.table {
+  border-color: var(--card-border, #e2e8f0);
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: rgba(79, 70, 229, 0.04);
+}
+
+.rounded-3 {
+  border-radius: 0.5rem !important;
+}
+
+.rounded-4 {
+  border-radius: 1rem !important;
+}
+
+.rounded-pill {
+  border-radius: 50rem !important;
+}
+
+.box-shadow {
+  box-shadow: var(--shadow-md);
+}
+
+.border-top {
+  border-top: 1px solid var(--card-border, #e2e8f0) !important;
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--card-border, #e2e8f0) !important;
+}

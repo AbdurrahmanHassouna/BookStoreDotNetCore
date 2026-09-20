@@ -1,0 +1,20 @@
+@inject SignInManager<ApplicationUser> SignInManager
+<div class="card border-0 shadow-sm rounded-3 p-3">
+    <ul class="nav nav-pills flex-column gap-1">
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext) rounded-3" id="profile" asp-page="./Index">
+                <i class="bi bi-person-circle me-2"></i> Profile
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext) rounded-3" id="change-password" asp-page="./ChangePassword">
+                <i class="bi bi-key-fill me-2"></i> Password
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-3" id="YourOrders" asp-action="Index" asp-controller="Orders">
+                <i class="bi bi-bag-check-fill me-2"></i> Your Orders
+            </a>
+        </li>
+    </ul>
+</div>

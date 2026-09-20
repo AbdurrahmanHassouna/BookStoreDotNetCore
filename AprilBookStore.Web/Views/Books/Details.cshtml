@@ -1,0 +1,155 @@
+@model BookDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+    var isAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
+}
+
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Catalog</a></li>
+            @if (!string.IsNullOrEmpty(Model.CategoryName) && Model.CategoryId.HasValue)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Details" asp-route-id="@Model.CategoryId.Value">@Model.CategoryName</a></li>
+            }
+            else if (!string.IsNullOrEmpty(Model.CategoryName))
+            {
+                <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index">@Model.CategoryName</a></li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5">
+        <div class="col-md-5 col-lg-4 text-center">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <img asp-append-version="true"
+                     src="@(string.IsNullOrEmpty(Model.ImgPath) ? "/Assets/download.png" : Model.ImgPath)"
+                     class="img-fluid w-100"
+                     style="aspect-ratio: 2/3; object-fit: cover;"
+                     alt="Cover of @Model.Name" />
+            </div>
+        </div>
+
+        <div class="col-md-7 col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                @if (Model.CategoryId.HasValue)
+                {
+                    <a asp-controller="Category" asp-action="Details" asp-route-id="@Model.CategoryId.Value" class="text-decoration-none">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                            @(string.IsNullOrEmpty(Model.CategoryName) ? "General" : Model.CategoryName)
+                        </span>
+                    </a>
+                }
+                else
+                {
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
+                        @(string.IsNullOrEmpty(Model.CategoryName) ? "General" : Model.CategoryName)
+                    </span>
+                }
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 rounded-pill">
+                    @Model.Format
+                </span>
+                @if (Model.QuantityInStock > 0)
+                {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                        <i class="bi bi-check-circle me-1"></i>In Stock (@Model.QuantityInStock copies)
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
+                        <i class="bi bi-x-circle me-1"></i>Out of Stock
+                    </span>
+                }
+            </div>
+
+            <h1 class="display-6 fw-bold mb-2">@Model.Name</h1>
+            <p class="fs-5 text-muted mb-3">
+                By 
+                @if (Model.AuthorId.HasValue)
+                {
+                    <a asp-controller="Authors" asp-action="Details" asp-route-id="@Model.AuthorId.Value" class="text-decoration-none fw-semibold">@(Model.AuthorName ?? "Unknown Author")</a>
+                }
+                else
+                {
+                    <span class="fw-semibold">@(Model.AuthorName ?? "Unknown Author")</span>
+                }
+            </p>
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div class="text-warning fs-5">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi @(i <= (int)(Model.BookStar ?? 0) ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                    }
+                </div>
+                @if (Model.BookStar.HasValue && Model.BookStar > 0)
+                {
+                    <span class="fw-semibold">@Model.BookStar.Value.ToString("0.0")</span>
+                }
+            </div>
+
+            <div class="mb-4">
+                <span class="display-5 fw-bold text-primary">$@string.Format("{0:n2}", Model.Price)</span>
+            </div>
+
+            <div class="card border-0 bg-light rounded-3 p-4 mb-4">
+                <h5 class="fw-bold mb-3">Book Description</h5>
+                <p class="text-muted mb-0 lh-lg">
+                    @(string.IsNullOrEmpty(Model.Description) ? "No description available for this title." : Model.Description)
+                </p>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <small class="text-muted d-block">ISBN</small>
+                        <span class="fw-semibold">@Model.ISBN</span>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <small class="text-muted d-block">Publication Date</small>
+                        <span class="fw-semibold">@Model.PublicationDate.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 align-items-center pt-3 border-top">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (Model.QuantityInStock > 0)
+                    {
+                        <button type="button" class="btn btn-primary btn-lg px-4 addToCartBtn" data-book-id="@Model.Id">
+                            <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-outline-danger btn-lg px-4" disabled>
+                            Out of Stock
+                        </button>
+                    }
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign in to Purchase
+                    </a>
+                }
+
+                @if (isAdmin)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                }
+
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                    Back to Catalog
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

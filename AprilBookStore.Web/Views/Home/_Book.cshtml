@@ -1,0 +1,104 @@
+@model IPagedList<BookCatalogItemViewModel>
+
+<div class="container-xxl py-4">
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="bi bi-journal-x text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h4 class="text-secondary fw-semibold">No Books Found</h4>
+            <p class="text-muted">We couldn't find any books matching your criteria.</p>
+            <a asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm rounded-3 book-card hover-shadow">
+                        <a asp-action="Details" asp-controller="Books" asp-route-id="@item.Id" class="text-decoration-none">
+                            <img asp-append-version="true"
+                                 src="@(string.IsNullOrEmpty(item.ImgPath) ? "/Assets/download.png" : item.ImgPath)"
+                                 class="card-img-top rounded-top-3"
+                                 style="aspect-ratio: 2/3; object-fit: cover;"
+                                 loading="lazy"
+                                 alt="Cover of @item.Name" />
+                        </a>
+                        <div class="card-body d-flex flex-column p-3">
+                            @if (item.CategoryId.HasValue)
+                            {
+                                <a asp-controller="Category" asp-action="Details" asp-route-id="@item.CategoryId.Value" class="text-decoration-none align-self-start mb-2">
+                                    <span class="badge bg-light text-secondary border px-2 py-1 small">
+                                        @(string.IsNullOrEmpty(item.CategoryName) ? "General" : item.CategoryName)
+                                    </span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-secondary border align-self-start mb-2 px-2 py-1 small">
+                                    @(string.IsNullOrEmpty(item.CategoryName) ? "General" : item.CategoryName)
+                                </span>
+                            }
+                            <h6 class="card-title fw-bold text-truncate mb-1" title="@item.Name">
+                                <a asp-action="Details" asp-controller="Books" asp-route-id="@item.Id" class="text-decoration-none text-dark">
+                                    @item.Name
+                                </a>
+                            </h6>
+                            <p class="card-text text-muted small mb-2">
+                                @if (item.AuthorId.HasValue)
+                                {
+                                    <a asp-controller="Authors" asp-action="Details" asp-route-id="@item.AuthorId.Value" class="text-decoration-none text-muted">
+                                        <i class="bi bi-person me-1"></i>@(item.AuthorName ?? "Unknown Author")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span><i class="bi bi-person me-1"></i>@(item.AuthorName ?? "Unknown Author")</span>
+                                }
+                            </p>
+                            <div class="mb-3">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= (int)(item.BookStar ?? 0) ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                }
+                                @if (item.BookStar.HasValue && item.BookStar > 0)
+                                {
+                                    <span class="small text-muted ms-1">(@item.BookStar.Value.ToString("0.0"))</span>
+                                }
+                            </div>
+                            <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="fw-bold fs-5 text-primary">$@string.Format("{0:n2}", item.Price)</span>
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    @if (item.QuantityInStock <= 0)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                                            Out of stock
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-primary btn-sm addToCartBtn" data-book-id="@item.Id" title="Add to cart">
+                                            <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                                        </button>
+                                    }
+                                }
+                                else
+                                {
+                                    <a asp-area="Identity" asp-page="/account/login" class="btn btn-outline-primary btn-sm" title="Add to cart">
+                                        <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

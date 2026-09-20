@@ -1,0 +1,100 @@
+@model AprilBookStore.Web.ViewModels.Cart.CartViewModel
+
+@if (!Model.IsEmpty)
+{
+    <div class="row g-4">
+        <!-- Left column: Cart items -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Shopping Cart (@Model.Items.Sum(i => i.Quantity) @(Model.Items.Sum(i => i.Quantity) == 1 ? "item" : "items"))</h4>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="card shadow-sm border-0 rounded-3 p-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-3 col-sm-2 text-center">
+                                @if (!string.IsNullOrEmpty(item.ImgPath))
+                                {
+                                    <img src="@item.ImgPath" class="img-fluid rounded shadow-sm" alt="@item.BookName" style="max-height: 110px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 100px;">
+                                        <i class="bi bi-book fs-2 text-muted"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-9 col-sm-6">
+                                <h5 class="fw-semibold mb-1 text-truncate" title="@item.BookName">@item.BookName</h5>
+                                <div class="text-muted small mb-1">
+                                    <span>Unit Price: $@item.UnitPrice.ToString("N2")</span>
+                                </div>
+                                <div class="text-primary fw-bold">
+                                    Subtotal: $@item.Subtotal.ToString("N2")
+                                </div>
+                                @if (item.QuantityInStock <= 0)
+                                {
+                                    <span class="badge bg-danger mt-1">Out of stock</span>
+                                }
+                            </div>
+                            <div class="col-12 col-sm-4 d-flex justify-content-sm-end align-items-center gap-2">
+                                <div class="d-flex align-items-center">
+                                    <label class="form-label me-2 mb-0 small text-muted d-none d-sm-inline">Qty:</label>
+                                    <select class="form-select form-select-sm quantity-select" data-book-id="@item.BookId" style="width: 75px;" aria-label="Select quantity">
+                                        @for (int i = 1; i <= Math.Max(item.QuantityInStock, item.Quantity); i++)
+                                        {
+                                            <option value="@i" selected="@(i == item.Quantity)">@i</option>
+                                        }
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm delete-cart-item" data-book-id="@item.BookId" aria-label="Remove @item.BookName from cart" title="Remove @item.BookName from cart">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right column: Sticky order summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 2rem;">
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-3">Order Summary</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-semibold">$@Model.Subtotal.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Shipping</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Free Shipping</span>
+                    </div>
+                    <hr class="my-3" />
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fs-5 fw-bold">Total</span>
+                        <span class="fs-5 fw-bold text-primary">$@Model.TotalAmount.ToString("N2")</span>
+                    </div>
+                    <a asp-action="ConfirmOrder" asp-controller="Orders" class="btn btn-primary w-100 py-2 fw-semibold">
+                        <i class="bi bi-lock-fill me-1"></i> Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm border-0 rounded-3 text-center py-5">
+        <div class="card-body py-5">
+            <i class="bi bi-cart-x fs-1 text-muted"></i>
+            <h3 class="mt-3 mb-2 fw-bold">Your shopping cart is empty</h3>
+            <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-primary px-4 py-2">
+                <i class="bi bi-arrow-left me-1"></i> Explore Books
+            </a>
+        </div>
+    </div>
+}

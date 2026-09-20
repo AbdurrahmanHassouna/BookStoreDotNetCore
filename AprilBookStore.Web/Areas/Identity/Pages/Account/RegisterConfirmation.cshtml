@@ -1,0 +1,39 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Register confirmation";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center">
+                <div class="mb-3">
+                    <i class="bi bi-envelope-open-heart text-primary fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-2">Confirm Your Account</h3>
+                @{
+                    if (Model.DisplayConfirmAccountLink)
+                    {
+                        <div class="alert alert-info text-start my-3" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Please confirm your account by clicking the link below:
+                        </div>
+                        <div class="d-grid gap-2 mb-3">
+                            <a id="confirm-link" href="@Model.EmailConfirmationUrl" class="btn btn-primary btn-lg">Confirm Account</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-4">
+                            Please check your email to confirm your account.
+                        </p>
+                    }
+                }
+                <div class="text-center">
+                    <a asp-page="./Login" class="text-decoration-none">Return to Log in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

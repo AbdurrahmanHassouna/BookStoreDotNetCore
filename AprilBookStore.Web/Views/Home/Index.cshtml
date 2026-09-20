@@ -1,0 +1,76 @@
+@model IPagedList<BookCatalogItemViewModel>
+
+@{
+    ViewBag.Title = "Discover Books";
+    var currentSearch = Context.Request.Query["search"].ToString();
+}
+
+<!-- Hero Banner -->
+<div class="p-5 mb-4 rounded-4 bg-light shadow-sm border text-center position-relative overflow-hidden">
+    <div class="container py-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-semibold">
+            <i class="bi bi-stars me-1"></i> Featured Collection
+        </span>
+        <h1 class="display-5 fw-bold text-dark mb-3">Discover Your Next Great Read</h1>
+        <p class="lead text-muted col-lg-8 mx-auto mb-4">
+            Browse our curated collection of bestselling novels, literature, and educational titles.
+        </p>
+        <div class="d-flex justify-content-center">
+            <form class="row g-2 justify-content-center w-100" style="max-width: 550px;" method="get" asp-action="Index">
+                <div class="col-8 col-sm-9">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search by title, author..." value="@currentSearch" />
+                    </div>
+                </div>
+                <div class="col-4 col-sm-3">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Book Grid -->
+@await Html.PartialAsync("_Book", Model)
+
+<!-- Bootstrap 5 Clean Pagination -->
+@if (Model.PageCount > 1)
+{
+    <nav aria-label="Book catalog pagination" class="d-flex justify-content-center my-4">
+        @Html.PagedListPager(Model, page => Url.Action("Index", new { page, search = currentSearch }),
+            new PagedListRenderOptions
+            {
+                LiElementClasses = new string[] { "page-item" },
+                PageClasses = new string[] { "page-link" },
+                UlElementClasses = new string[] { "pagination", "justify-content-center", "mb-0" },
+                Display = PagedListDisplayMode.IfNeeded,
+                DisplayPageCountAndCurrentLocation = false
+            })
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        $(document).on('click', '.addToCartBtn', function () {
+            var $btn = $(this);
+            var bookId = $btn.data('book-id');
+            $.ajax({
+                url: '@Url.Action("AddToCart", "Cart")',
+                type: 'POST',
+                data: { bookId: bookId },
+                success: function (result) {
+                    $('#cartItemCount').html(result);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Item added to cart successfully!');
+                    }
+                },
+                error: function () {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('An error occurred while adding the item to the cart.');
+                    }
+                }
+            });
+        });
+    </script>
+}
