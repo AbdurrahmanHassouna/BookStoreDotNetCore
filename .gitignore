@@ -15,3 +15,5 @@
 ## Secrets and Local Configuration
 secrets.json
 appsettings.*.local.json
+appsettings.Development.json
+**/appsettings.Development.json
