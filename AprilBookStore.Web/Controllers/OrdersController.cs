@@ -1,9 +1,7 @@
-using System.Security.Claims;
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Web.ViewModels.Order;
+using AprilBookStore.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AprilBookStore.Web.Controllers;
 
@@ -19,90 +17,49 @@ public class OrdersController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return Challenge();
 
-        var orders = await _orderService.GetOrdersByUserIdAsync(userId);
-        var viewModels = orders.Select(o => new OrderListItemViewModel
-        {
-            Id = o.Id,
-            OrderDate = o.OrderDate,
-            TotalAmount = o.TotalAmount,
-            ItemCount = o.OrderItems?.Sum(i => i.Quantity) ?? 0
-        }).ToList();
+        var orders = await _orderService.GetUserOrdersAsync(userId);
+        var viewModels = orders.Select(o => o.ToViewModel()).ToList();
 
         return View(viewModels);
     }
 
     public async Task<IActionResult> Details(Guid id)
     {
-        var order = await _orderService.GetOrderDetailsAsync(id);
+        var userId = User.GetUserId();
+        if (string.IsNullOrEmpty(userId)) return Challenge();
+
+        var order = await _orderService.GetOrderDetailsAsync(id, userId);
         if (order == null)
         {
             return NotFound();
         }
 
-        var viewModel = new OrderDetailsViewModel
-        {
-            Id = order.Id,
-            OrderDate = order.OrderDate,
-            TotalAmount = order.TotalAmount,
-            Items = order.OrderItems.Select(item => new OrderItemViewModel
-            {
-                Id = item.Id,
-                BookName = item.BookName,
-                Quantity = item.Quantity,
-                UnitPrice = item.Price,
-                TotalPrice = item.Price * item.Quantity
-            }).ToList()
-        };
-
-        return View(viewModel);
+        return View(order.ToViewModel());
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmOrder()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId))
         {
             return Challenge();
         }
 
-        try
+        var result = await _orderService.SubmitOrderAsync(userId);
+        if (!result.Success)
         {
-            var order = await _orderService.SubmitOrderAsync(userId);
-            if (order == null)
+            if (!string.IsNullOrEmpty(result.ErrorMessage))
             {
-                return RedirectToAction("Index", "Cart");
+                TempData["CartError"] = result.ErrorMessage;
             }
-
-            var viewModel = new OrderDetailsViewModel
-            {
-                Id = order.Id,
-                OrderDate = order.OrderDate,
-                TotalAmount = order.TotalAmount,
-                Items = order.OrderItems.Select(item => new OrderItemViewModel
-                {
-                    Id = item.Id,
-                    BookName = item.BookName,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.Price,
-                    TotalPrice = item.Price * item.Quantity
-                }).ToList()
-            };
-
-            return View(viewModel);
-        }
-        catch (InvalidOperationException ex)
-        {
-            TempData["CartError"] = ex.Message;
             return RedirectToAction("Index", "Cart");
         }
-        catch (DbUpdateConcurrencyException)
-        {
-            TempData["CartError"] = "One or more items in your cart had stock changes while processing your order. Please review your cart and try again.";
-            return RedirectToAction("Index", "Cart");
-        }
+
+        return View(result.Order!.ToViewModel());
     }
 }
-

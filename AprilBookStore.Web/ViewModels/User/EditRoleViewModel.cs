@@ -8,9 +8,9 @@ public class EditRoleViewModel
     {
         Users = new List<string>();
     }
-    public string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
     [Required(ErrorMessage = "Role name is required !!")]
-    public string RoleName { get; set; }
+    public string RoleName { get; set; } = string.Empty;
 
     public List<string> Users { get; set; }
 }

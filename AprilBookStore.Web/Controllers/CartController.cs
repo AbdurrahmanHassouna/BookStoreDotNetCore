@@ -1,7 +1,5 @@
-using System.Security.Claims;
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Domain.Entities;
-using AprilBookStore.Web.ViewModels.Cart;
+using AprilBookStore.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,19 +17,18 @@ public class CartController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return Challenge();
 
-        var cart = await _cartService.GetCartItemsAsync(userId);
-        var viewModel = MapToCartViewModel(cart);
-        return View(viewModel);
+        var cart = await _cartService.GetCartAsync(userId);
+        return View(cart.ToViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<int> AddToCart(Guid bookId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return 0;
 
         return await _cartService.AddToCartAsync(userId, bookId);
@@ -41,51 +38,30 @@ public class CartController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateCart(Guid bookId, int quantity)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return Challenge();
 
-        await _cartService.UpdateCartItemQuantityAsync(userId, bookId, quantity);
-        var updatedCart = await _cartService.GetCartItemsAsync(userId);
-        var viewModel = MapToCartViewModel(updatedCart);
-        return PartialView("_Cart", viewModel);
+        var cart = await _cartService.UpdateQuantityAsync(userId, bookId, quantity);
+        return PartialView("_Cart", cart.ToViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteCartItem(Guid id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return Challenge();
 
-        await _cartService.DeleteCartItemAsync(userId, id);
-        var updatedCart = await _cartService.GetCartItemsAsync(userId);
-        var viewModel = MapToCartViewModel(updatedCart);
-        return PartialView("_Cart", viewModel);
+        var cart = await _cartService.RemoveItemAsync(userId, id);
+        return PartialView("_Cart", cart.ToViewModel());
     }
 
     [HttpGet]
     public async Task<int> GetCartCount()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserId();
         if (string.IsNullOrEmpty(userId)) return 0;
 
         return await _cartService.GetCartItemsCountAsync(userId);
-    }
-
-    private static CartViewModel MapToCartViewModel(ICollection<CartItem> cartItems)
-    {
-        return new CartViewModel
-        {
-            Items = cartItems.Select(c => new CartItemViewModel
-            {
-                Id = c.Id,
-                BookId = c.BookId,
-                BookName = c.Book?.Name ?? string.Empty,
-                ImgPath = c.Book?.ImgPath,
-                UnitPrice = c.Book?.Price ?? 0,
-                Quantity = c.Quantity,
-                QuantityInStock = c.Book?.QuantityInStock ?? 0
-            }).ToList()
-        };
     }
 }

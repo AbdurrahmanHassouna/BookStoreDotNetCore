@@ -1,5 +1,5 @@
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Domain.Entities;
+using AprilBookStore.Application.Models.Category;
 using AprilBookStore.Web.ViewModels.Category;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +16,18 @@ public class CategoryController : Controller
         _categoryService = categoryService;
     }
 
+    private bool IsAdminUser() => User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
+
     [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
-        var categories = await _categoryService.GetCategoriesAsync();
-        var isAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
+        var categories = await _categoryService.GetCategoriesAsync(forAdmin: IsAdminUser());
         var model = categories.Select(c => new CategoryViewModel
         {
             Id = c.Id,
             Name = c.Name,
             IsVisible = c.IsVisible,
-            BookCount = c.Books != null
-                ? (isAdmin ? c.Books.Count : c.Books.Count(b => b.IsVisible))
-                : 0,
+            BookCount = c.BookCount,
             CreatedDate = c.CreatedDate,
             UpdatedDate = c.UpdatedDate
         }).ToList();
@@ -39,17 +38,10 @@ public class CategoryController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Details(Guid id)
     {
-        var category = await _categoryService.GetCategoryByIdAsync(id);
+        var category = await _categoryService.GetCategoryDetailsAsync(id, forAdmin: IsAdminUser());
         if (category == null)
         {
             return NotFound();
-        }
-
-        var isAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
-        var books = category.Books?.AsEnumerable() ?? Enumerable.Empty<Book>();
-        if (!isAdmin)
-        {
-            books = books.Where(b => b.IsVisible);
         }
 
         var model = new CategoryViewModel
@@ -57,16 +49,16 @@ public class CategoryController : Controller
             Id = category.Id,
             Name = category.Name,
             IsVisible = category.IsVisible,
-            BookCount = books.Count(),
+            BookCount = category.BookCount,
             CreatedDate = category.CreatedDate,
             UpdatedDate = category.UpdatedDate,
-            Books = books.Select(b => new CategoryBookItemViewModel
+            Books = category.Books.Select(b => new CategoryBookItemViewModel
             {
                 Id = b.Id,
                 Name = b.Name,
                 Price = b.Price,
                 ImgPath = b.ImgPath,
-                AuthorName = b.Author?.Name ?? "Unknown Author",
+                AuthorName = b.AuthorName,
                 BookStar = b.BookStar,
                 QuantityInStock = b.QuantityInStock,
                 IsVisible = b.IsVisible
@@ -85,18 +77,28 @@ public class CategoryController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateCategoryViewModel model)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var category = new Category
-            {
-                Name = model.Name,
-                IsVisible = model.IsVisible
-            };
-
-            await _categoryService.CreateCategoryAsync(category);
-            return RedirectToAction(nameof(Index));
+            return View(model);
         }
-        return View(model);
+
+        var dto = new CreateCategoryDto
+        {
+            Name = model.Name,
+            IsVisible = model.IsVisible
+        };
+
+        var result = await _categoryService.CreateCategoryAsync(dto);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            return View(model);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Edit(Guid id)
@@ -126,21 +128,29 @@ public class CategoryController : Controller
             return NotFound();
         }
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            category.Name = model.Name;
-            category.IsVisible = model.IsVisible;
-
-            await _categoryService.UpdateCategoryAsync(category);
-            return RedirectToAction(nameof(Index));
+            return View(model);
         }
-        return View(model);
+
+        var dto = new UpdateCategoryDto
+        {
+            Id = model.Id,
+            Name = model.Name,
+            IsVisible = model.IsVisible
+        };
+
+        var result = await _categoryService.UpdateCategoryAsync(dto);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            return View(model);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Delete(Guid id)
@@ -156,6 +166,7 @@ public class CategoryController : Controller
             Id = category.Id,
             Name = category.Name,
             IsVisible = category.IsVisible,
+            BookCount = category.BookCount,
             CreatedDate = category.CreatedDate,
             UpdatedDate = category.UpdatedDate
         };
@@ -167,7 +178,48 @@ public class CategoryController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
-        await _categoryService.DeleteCategoryAsync(id);
+        var category = await _categoryService.GetCategoryByIdAsync(id);
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        var result = await _categoryService.DeleteCategoryAsync(id);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            var model = new CategoryViewModel
+            {
+                Id = category.Id,
+                Name = category.Name,
+                IsVisible = category.IsVisible,
+                BookCount = category.BookCount,
+                CreatedDate = category.CreatedDate,
+                UpdatedDate = category.UpdatedDate
+            };
+            return View("Delete", model);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _categoryService.RestoreCategoryAsync(id);
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = string.Join(", ", result.Errors);
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "Category restored successfully.";
+        }
+
         return RedirectToAction(nameof(Index));
     }
 }

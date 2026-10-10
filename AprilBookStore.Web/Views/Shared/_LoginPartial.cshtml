@@ -3,7 +3,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav align-items-center">
+<ul class="navbar-nav auth-navigation align-items-center" aria-label="Account navigation">
     @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">

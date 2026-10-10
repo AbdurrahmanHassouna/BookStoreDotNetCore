@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace AprilBookStore.Infrastructure;
 
@@ -18,11 +19,17 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'DefaultConnections' not found.");
 
         services.AddScoped<AuditableEntityInterceptor>();
-
         services.AddDbContext<BookStoreContext>((sp, options) =>
+        {
             options.UseSqlServer(connectionString, optionsBuilder => optionsBuilder.MigrationsAssembly("AprilBookStore.Infrastructure"))
-                   .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>())
-                   .EnableSensitiveDataLogging());
+                   .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+
+            var hostEnvironment = sp.GetService<IHostEnvironment>();
+            if (hostEnvironment?.IsDevelopment() == true)
+            {
+                options.EnableSensitiveDataLogging();
+            }
+        });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<BookStoreContext>());
 

@@ -1,20 +1,28 @@
 using AprilBookStore.Application;
 using AprilBookStore.Application.Interfaces;
 using AprilBookStore.Infrastructure;
+using AprilBookStore.Infrastructure.Data;
+using AprilBookStore.Web.Extensions;
+using AprilBookStore.Web.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AprilBookStore.Web;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddControllersWithViews(options =>
+        {
+            options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+        });
         builder.Services.AddRazorPages();
         builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
         var clientId = builder.Configuration["ClientId"];
         var clientSecret = builder.Configuration["ClientSecret"];
@@ -31,8 +39,11 @@ public static class Program
         {
             options.AddPolicy("DeleteRolePolicy", p => p.RequireRole("SuperAdmin"));
             options.AddPolicy("EditRolePolicy", p => p.RequireRole("SuperAdmin"));
+            options.AddPolicy("DeleteUserPolicy", p => p.RequireRole("SuperAdmin"));
         });
         var app = builder.Build();
+
+        await app.SeedDatabaseAsync();
 
         if (app.Environment.IsDevelopment())
         {
@@ -55,6 +66,6 @@ public static class Program
             pattern: "{controller=Home}/{action=Index}/{id?}");
         app.MapRazorPages();
 
-        app.Run();
+        await app.RunAsync();
     }
 }

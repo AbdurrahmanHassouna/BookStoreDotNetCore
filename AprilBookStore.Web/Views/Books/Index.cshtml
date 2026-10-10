@@ -1,113 +1,390 @@
 @model IPagedList<BookListItemViewModel>
 @{
     ViewData["Title"] = "Manage Books";
+    string currentSort = ViewData["CurrentSort"] as string ?? "date_desc";
+    string prevSort = ViewData["PrevSort"] as string ?? "";
+    string nameFilter = ViewData["NameFilter"] as string ?? "";
+    Guid? categoryFilter = ViewData["CategoryFilter"] as Guid?;
+    string statusFilter = ViewData["StatusFilter"] as string ?? "";
+    decimal? minPrice = ViewData["MinPrice"] as decimal?;
+    decimal? maxPrice = ViewData["MaxPrice"] as decimal?;
+
+    string GetNextSort(string column)
+    {
+        if (currentSort.StartsWith(column + "_", StringComparison.OrdinalIgnoreCase))
+        {
+            return currentSort.EndsWith("_asc", StringComparison.OrdinalIgnoreCase) ? $"{column}_desc" : $"{column}_asc";
+        }
+        return column == "date" ? "date_desc" : $"{column}_asc";
+    }
+
+    Microsoft.AspNetCore.Html.IHtmlContent RenderSortIcon(string column)
+    {
+        if (currentSort.StartsWith(column + "_", StringComparison.OrdinalIgnoreCase))
+        {
+            bool isAsc = currentSort.EndsWith("_asc", StringComparison.OrdinalIgnoreCase);
+            return new Microsoft.AspNetCore.Html.HtmlString(
+                $"<i class=\"bi {(isAsc ? "bi-sort-up" : "bi-sort-down")} text-primary ms-1\"></i>");
+        }
+        if (!string.IsNullOrEmpty(prevSort) && prevSort.StartsWith(column + "_", StringComparison.OrdinalIgnoreCase))
+        {
+            bool isAsc = prevSort.EndsWith("_asc", StringComparison.OrdinalIgnoreCase);
+            return new Microsoft.AspNetCore.Html.HtmlString(
+                $"<i class=\"bi {(isAsc ? "bi-sort-up" : "bi-sort-down")} text-muted opacity-50 ms-1\" title=\"Secondary sort\"></i>");
+        }
+        return new Microsoft.AspNetCore.Html.HtmlString("<i class=\"bi bi-arrow-down-up text-muted opacity-25 ms-1\"></i>");
+    }
 }
 
-<div class="container-fluid mt-4">
-    <h1 class="text-center mb-4">@ViewData["Title"]</h1>
+<div class="container-fluid workspace-page workspace-page--wide books-admin-page py-4">
+    <div class="page-heading d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="page-eyebrow mb-1">Bookshop administration</p>
+            <h1 class="h2 mb-1"><i class="bi bi-book me-2" aria-hidden="true"></i>@ViewData["Title"]</h1>
+            <p class="text-muted mb-0">Search, filter, sort, and manage bookstore inventory.</p>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-success shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Add New Book
+            </a>
+        </div>
+    </div>
 
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <form asp-action="Index" asp-controller="Books" method="post" class="row g-3 align-items-center">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Filter Card -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold text-secondary">
+                <i class="bi bi-funnel me-1"></i> Filter Books
+            </span>
+            <span class="badge bg-primary rounded-pill">
+                @Model.TotalItemCount @(Model.TotalItemCount == 1 ? "Book" : "Books") Found
+            </span>
+        </div>
+        <div class="card-body">
+            <form asp-action="Index" asp-controller="Books" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="sortOrder" value="@currentSort" />
+                <input type="hidden" name="prevSort" value="@prevSort" />
+
                 <div class="col-md-3">
-                    <input id="SearchName" type="text" name="name" class="form-control" placeholder="Search by name..." value="@ViewData["NameFilter"]">
+                    <label class="form-label small fw-bold text-muted">Search Title, Author, Category</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="name" class="form-control SearchAdmin" placeholder="Search keywords..." value="@nameFilter">
+                    </div>
                 </div>
-                <div class="col-md-3">
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Category</label>
                     <select name="categoryId" class="form-select" asp-items="ViewBag.Categories">
                         <option value="">All Categories</option>
                     </select>
                 </div>
+
                 <div class="col-md-2">
-                    <input type="number" name="minPrice" class="form-control" placeholder="Min Price" value="@ViewData["MinPrice"]">
+                    <label class="form-label small fw-bold text-muted">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">All Statuses</option>
+                        <option value="active" selected="@(statusFilter == "active")">Active Only</option>
+                        <option value="deleted" selected="@(statusFilter == "deleted")">Deleted Only</option>
+                        <option value="hidden" selected="@(statusFilter == "hidden")">Hidden Only</option>
+                    </select>
                 </div>
-                <div class="col-md-2">
-                    <input type="number" name="maxPrice" class="form-control" placeholder="Max Price" value="@ViewData["MaxPrice"]">
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Price Range ($)</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" name="minPrice" class="form-control" placeholder="Min" value="@minPrice">
+                        <span class="input-group-text bg-light text-muted">-</span>
+                        <input type="number" step="0.01" name="maxPrice" class="form-control" placeholder="Max" value="@maxPrice">
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary" title="Reset all filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-12 text-end">
-            <a asp-action="Create" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Add New Book
-            </a>
+    <!-- Active Filter Badges & Sort Summary -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="small text-muted fw-bold">Active Sort:</span>
+            <span class="badge bg-light text-dark border">
+                @currentSort.Replace("_", " ").ToUpper()
+            </span>
+            @if (!string.IsNullOrWhiteSpace(prevSort))
+            {
+                <span class="small text-muted">Then by:</span>
+                <span class="badge bg-light text-secondary border">
+                    @prevSort.Replace("_", " ").ToUpper()
+                </span>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(nameFilter) || categoryFilter.HasValue || !string.IsNullOrEmpty(statusFilter) || minPrice.HasValue || maxPrice.HasValue)
+        {
+            <div>
+                <a asp-action="Index" class="small text-danger text-decoration-none">
+                    <i class="bi bi-x-circle me-1"></i>Clear all filters
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Books Table -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="min-width: 220px;">
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("name")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center">
+                                Book Name @RenderSortIcon("name")
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("author")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center">
+                                Author @RenderSortIcon("author")
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("category")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center">
+                                Category @RenderSortIcon("category")
+                            </a>
+                        </th>
+                        <th class="text-end">
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("price")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-end">
+                                Price @RenderSortIcon("price")
+                            </a>
+                        </th>
+                        <th class="text-center">
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("qty")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-center">
+                                In Stock @RenderSortIcon("qty")
+                            </a>
+                        </th>
+                        <th class="text-center">Status</th>
+                        <th>
+                            <a asp-action="Index"
+                               asp-route-sortOrder="@GetNextSort("date")"
+                               asp-route-prevSort="@currentSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice"
+                               class="text-white text-decoration-none d-flex align-items-center">
+                                Last Edited @RenderSortIcon("date")
+                            </a>
+                        </th>
+                        <th class="text-end" style="min-width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr class="@(item.IsDeleted ? "table-danger bg-opacity-10" : "")">
+                                <td>
+                                    <div class="fw-semibold">@item.Name</div>
+                                    <small class="text-muted">Format: @item.Format</small>
+                                </td>
+                                <td>@item.AuthorName</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@item.CategoryName</span>
+                                </td>
+                                <td class="text-end fw-bold">@item.Price.ToString("C")</td>
+                                <td class="text-center">
+                                    @if (item.QuantityInStock <= 0)
+                                    {
+                                        <span class="badge bg-danger">0 Out of Stock</span>
+                                    }
+                                    else if (item.QuantityInStock < 5)
+                                    {
+                                        <span class="badge bg-warning text-dark">@item.QuantityInStock Low</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@item.QuantityInStock</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsDeleted)
+                                    {
+                                        <span class="badge bg-danger"><i class="bi bi-trash me-1"></i>Deleted</span>
+                                    }
+                                    else if (!item.IsVisible)
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-eye-slash me-1"></i>Hidden</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="small" title="Edited: @item.UpdatedDate.ToString("F")">
+                                        @item.UpdatedDate.ToString("yyyy-MM-dd HH:mm")
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        @if (item.IsDeleted)
+                                        {
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
+                                                <i class="bi bi-info-circle"></i>
+                                            </a>
+                                            <form asp-action="Restore" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Restore Book" onclick="return confirm('Are you sure you want to restore this book? Its author and category will also be restored if needed.');">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit Book">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
+                                                <i class="bi bi-info-circle"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Delete Book">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                    <h5>No books found</h5>
+                                    <p class="mb-3">Try adjusting or clearing your search and filter criteria.</p>
+                                    <a asp-action="Index" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>@Html.DisplayNameFor(model => model.First().Name)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().Format)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().Price)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().QuantityInStock)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().IsDeleted)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().IsVisible)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().AuthorName)</th>
-                    <th>@Html.DisplayNameFor(model => model.First().CategoryName)</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@Html.DisplayFor(modelItem => item.Name)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Format)</td>
-                        <td>@Html.DisplayFor(modelItem => item.Price)</td>
-                        <td>@Html.DisplayFor(modelItem => item.QuantityInStock)</td>
-                        <td>
-                            <span class="badge bg-@(item.IsDeleted ? "danger" : "success")">
-                                @(item.IsDeleted ? "Deleted" : "Active")
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge bg-@(item.IsVisible ? "primary" : "secondary")">
-                                @(item.IsVisible ? "Visible" : "Hidden")
-                            </span>
-                        </td>
-                        <td>@Html.DisplayFor(modelItem => item.AuthorName)</td>
-                        <td>@Html.DisplayFor(modelItem => item.CategoryName)</td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </a>
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Details">
-                                    <i class="bi bi-info-circle"></i> Details
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete">
-                                    <i class="bi bi-trash"></i> Delete
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
+    <!-- Pagination -->
     @if (Model.PageCount > 1)
     {
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-                @for (var i = 1; i <= Model.PageCount; i++)
-                {
-                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@i"
-                           asp-route-name="@ViewData["NameFilter"]"
-                           asp-route-categoryId="@ViewData["CategoryFilter"]"
-                           asp-route-minPrice="@ViewData["MinPrice"]"
-                           asp-route-maxPrice="@ViewData["MaxPrice"]">@i</a>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="small text-muted">
+                Page @Model.PageNumber of @Model.PageCount (@Model.TotalItemCount total items)
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(Model.PageNumber - 1)"
+                           asp-route-sortOrder="@currentSort"
+                           asp-route-prevSort="@prevSort"
+                           asp-route-name="@nameFilter"
+                           asp-route-categoryId="@categoryFilter"
+                           asp-route-status="@statusFilter"
+                           asp-route-minPrice="@minPrice"
+                           asp-route-maxPrice="@maxPrice">Previous</a>
                     </li>
-                }
-            </ul>
-        </nav>
+                    @for (var i = 1; i <= Model.PageCount; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@i"
+                               asp-route-sortOrder="@currentSort"
+                               asp-route-prevSort="@prevSort"
+                               asp-route-name="@nameFilter"
+                               asp-route-categoryId="@categoryFilter"
+                               asp-route-status="@statusFilter"
+                               asp-route-minPrice="@minPrice"
+                               asp-route-maxPrice="@maxPrice">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(Model.PageNumber + 1)"
+                           asp-route-sortOrder="@currentSort"
+                           asp-route-prevSort="@prevSort"
+                           asp-route-name="@nameFilter"
+                           asp-route-categoryId="@categoryFilter"
+                           asp-route-status="@statusFilter"
+                           asp-route-minPrice="@minPrice"
+                           asp-route-maxPrice="@maxPrice">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     }
 </div>
 

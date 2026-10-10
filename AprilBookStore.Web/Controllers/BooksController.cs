@@ -1,11 +1,11 @@
 using System.Net;
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Domain.Entities;
+using AprilBookStore.Application.Models.Book;
+using AprilBookStore.Web.Extensions;
 using AprilBookStore.Web.ViewModels.Book;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using X.PagedList;
 
 namespace AprilBookStore.Web.Controllers;
 
@@ -15,25 +15,21 @@ public class BooksController : Controller
     private readonly IBookService _bookService;
     private readonly IAuthorService _authorService;
     private readonly ICategoryService _categoryService;
-    private readonly IFileStorageService _fileStorageService;
 
     public BooksController(
         IBookService bookService,
         IAuthorService authorService,
-        ICategoryService categoryService,
-        IFileStorageService fileStorageService)
+        ICategoryService categoryService)
     {
         _bookService = bookService;
         _authorService = authorService;
         _categoryService = categoryService;
-        _fileStorageService = fileStorageService;
     }
 
-    [AcceptVerbs("GET", "POST")]
-    [AllowAnonymous]
+    [HttpGet]
     public async Task<IActionResult> AutoComplete(string term)
     {
-        var result = (await _bookService.SearchBooksAsync(term)).Select(b => b.Name).ToList();
+        var result = await _bookService.SearchBooksAsync(term, true);
         return Json(result);
     }
 
@@ -43,42 +39,46 @@ public class BooksController : Controller
         return Json(isUnique);
     }
 
-    public ActionResult Index(int? page)
+    [HttpGet]
+    public async Task<ActionResult> Index(
+        string? name,
+        string? search,
+        Guid? categoryId,
+        string? status,
+        decimal? minPrice,
+        decimal? maxPrice,
+        string? sortOrder,
+        string? prevSort,
+        int? page)
     {
-        var books = _bookService.GetBooks().OrderBy(b => b.Name);
-        var pagedBooks = books.ToPagedList(page ?? 1, 25);
-        var viewModels = pagedBooks.Select(b => new BookListItemViewModel
-        {
-            Id = b.Id,
-            Name = b.Name,
-            Format = b.Format,
-            Price = b.Price,
-            QuantityInStock = b.QuantityInStock,
-            IsDeleted = b.IsDeleted,
-            IsVisible = b.IsVisible,
-            AuthorName = b.Author?.Name ?? "Unknown",
-            CategoryName = b.Category?.Name ?? "Unknown"
-        });
-        var pagedList = new StaticPagedList<BookListItemViewModel>(viewModels, pagedBooks.GetMetaData());
-        return View(pagedList);
-    }
+        var searchTerm = !string.IsNullOrWhiteSpace(name) ? name : search;
 
-    [HttpPost]
-    public async Task<ActionResult> Index(string name, Guid? categoryId, decimal? minPrice, decimal? maxPrice, int? page)
-    {
-        var books = await _bookService.FilterBooksAsync(name, categoryId, minPrice, maxPrice);
-
-        ViewData["NameFilter"] = name;
+        ViewData["NameFilter"] = searchTerm;
         ViewData["CategoryFilter"] = categoryId;
+        ViewData["StatusFilter"] = status;
         ViewData["MinPrice"] = minPrice;
         ViewData["MaxPrice"] = maxPrice;
+        ViewData["CurrentSort"] = string.IsNullOrWhiteSpace(sortOrder) ? "date_desc" : sortOrder;
+        ViewData["PrevSort"] = prevSort;
 
-        ViewBag.Categories = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name");
+        ViewBag.Categories = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name", categoryId);
 
-        int pageSize = 25;
-        int pageNumber = page ?? 1;
-        var pagedBooks = await books.ToPagedListAsync(pageNumber, pageSize);
-        var viewModels = pagedBooks.Select(b => new BookListItemViewModel
+        var filter = new BookAdminFilterDto
+        {
+            Search = searchTerm,
+            CategoryId = categoryId,
+            Status = status,
+            MinPrice = minPrice,
+            MaxPrice = maxPrice,
+            SortOrder = sortOrder,
+            PrevSort = prevSort,
+            PageNumber = page ?? 1,
+            PageSize = 25
+        };
+
+        var pagedResult = await _bookService.GetAdminBooksAsync(filter);
+
+        var pagedList = pagedResult.ToPagedList(b => new BookListItemViewModel
         {
             Id = b.Id,
             Name = b.Name,
@@ -87,20 +87,27 @@ public class BooksController : Controller
             QuantityInStock = b.QuantityInStock,
             IsDeleted = b.IsDeleted,
             IsVisible = b.IsVisible,
-            AuthorName = b.Author?.Name ?? "Unknown",
-            CategoryName = b.Category?.Name ?? "Unknown"
+            AuthorName = b.AuthorName,
+            CategoryName = b.CategoryName,
+            UpdatedDate = b.UpdatedDate,
+            CreatedDate = b.CreatedDate
         });
-        var pagedList = new StaticPagedList<BookListItemViewModel>(viewModels, pagedBooks.GetMetaData());
+
         return View(pagedList);
     }
 
     [AllowAnonymous]
     public async Task<ActionResult> Details(Guid id)
     {
-        Book? book = await _bookService.GetBookByIdAsync(id);
+        var book = await _bookService.GetBookDetailsAsync(id);
         if (book == null)
         {
-            return View("NotFound");
+            return NotFound();
+        }
+
+        if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin") && (!book.IsVisible || book.IsDeleted))
+        {
+            return NotFound();
         }
 
         var viewModel = new BookDetailsViewModel
@@ -112,9 +119,9 @@ public class BooksController : Controller
             Price = book.Price,
             ImgPath = book.ImgPath,
             AuthorId = book.AuthorId,
-            AuthorName = book.Author?.Name ?? "Unknown",
+            AuthorName = book.AuthorName,
             CategoryId = book.CategoryId,
-            CategoryName = book.Category?.Name ?? "Unknown",
+            CategoryName = book.CategoryName,
             BookStar = book.BookStar,
             PublicationDate = book.PublicationDate,
             Description = book.Description,
@@ -127,8 +134,8 @@ public class BooksController : Controller
 
     public async Task<ActionResult> Create()
     {
-        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(), "Id", "Name");
-        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name");
+        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(forAdmin: true), "Id", "Name");
+        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(forAdmin: true), "Id", "Name");
         return View();
     }
 
@@ -138,7 +145,7 @@ public class BooksController : Controller
     {
         if (ModelState.IsValid)
         {
-            var newBook = new Book
+            var dto = new CreateBookDto
             {
                 Name = book.Name,
                 Description = book.Description,
@@ -150,22 +157,23 @@ public class BooksController : Controller
                 Price = book.Price,
                 PublicationDate = book.PublicationDate,
                 QuantityInStock = book.QuantityInStock,
-                IsVisible = true
+                CoverImage = book.BookCoverFile.ToFileUploadDto()
             };
 
-            if (book.BookCoverFile != null && book.BookCoverFile.Length > 0)
+            var result = await _bookService.CreateBookAsync(dto);
+            if (result.Succeeded)
             {
-                newBook.ImgPath = await _fileStorageService.SaveBookCoverAsync(
-                    book.BookCoverFile.OpenReadStream(),
-                    book.BookCoverFile.FileName);
+                return RedirectToAction(nameof(Index));
             }
 
-            await _bookService.CreateBookAsync(newBook);
-            return RedirectToAction("Index");
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
         }
 
-        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(), "Id", "Name", book.AuthorId);
-        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name", book.CategoryId);
+        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(forAdmin: true), "Id", "Name", book.AuthorId);
+        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(forAdmin: true), "Id", "Name", book.CategoryId);
         return View(book);
     }
 
@@ -176,7 +184,7 @@ public class BooksController : Controller
             return new StatusCodeResult((int)HttpStatusCode.BadRequest);
         }
 
-        Book? book = await _bookService.GetBookByIdAsync(id.Value);
+        var book = await _bookService.GetBookForEditAsync(id.Value);
         if (book == null)
         {
             return NotFound();
@@ -184,7 +192,7 @@ public class BooksController : Controller
 
         var viewModel = new EditBookViewModel
         {
-            Id = id.Value,
+            Id = book.Id,
             AuthorId = book.AuthorId,
             CategoryId = book.CategoryId,
             BookStar = book.BookStar,
@@ -195,11 +203,12 @@ public class BooksController : Controller
             PublicationDate = book.PublicationDate,
             Name = book.Name,
             Price = book.Price,
-            IsVisible = book.IsVisible
+            IsVisible = book.IsVisible,
+            ImgPath = book.ImgPath
         };
 
-        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(), "Id", "Name", book.AuthorId);
-        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name", book.CategoryId);
+        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(forAdmin: true), "Id", "Name", book.AuthorId);
+        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(forAdmin: true), "Id", "Name", book.CategoryId);
         return View(viewModel);
     }
 
@@ -207,46 +216,51 @@ public class BooksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> Edit(EditBookViewModel editedBook)
     {
-        var book = await _bookService.GetBookByIdAsync(editedBook.Id);
-        if (book == null)
+        if (ModelState.IsValid)
         {
-            return NotFound();
-        }
-
-        if (await _bookService.IsBookNameUniqueAsync(editedBook.Name, editedBook.Id))
-        {
-            book.Name = editedBook.Name;
-            book.Format = editedBook.Format;
-            book.ISBN = editedBook.ISBN;
-            book.Price = editedBook.Price;
-            book.IsVisible = editedBook.IsVisible;
-            book.PublicationDate = editedBook.PublicationDate;
-            book.QuantityInStock = editedBook.QuantityInStock;
-            book.AuthorId = editedBook.AuthorId;
-            book.CategoryId = editedBook.CategoryId;
-            book.BookStar = editedBook.BookStar;
-
-            if (editedBook.BookCoverFile != null && editedBook.BookCoverFile.Length > 0)
+            var dto = new UpdateBookDto
             {
-                _fileStorageService.DeleteBookCover(book.ImgPath);
-                book.ImgPath = await _fileStorageService.SaveBookCoverAsync(
-                    editedBook.BookCoverFile.OpenReadStream(),
-                    editedBook.BookCoverFile.FileName);
+                Id = editedBook.Id,
+                Name = editedBook.Name,
+                Format = editedBook.Format,
+                ISBN = editedBook.ISBN,
+                Price = editedBook.Price,
+                IsVisible = editedBook.IsVisible,
+                PublicationDate = editedBook.PublicationDate,
+                QuantityInStock = editedBook.QuantityInStock,
+                AuthorId = editedBook.AuthorId,
+                CategoryId = editedBook.CategoryId,
+                BookStar = editedBook.BookStar,
+                Description = editedBook.Description,
+                CoverImage = editedBook.BookCoverFile.ToFileUploadDto()
+            };
+
+            var result = await _bookService.UpdateBookAsync(dto);
+            if (result.Succeeded)
+            {
+                return RedirectToAction(nameof(Index));
             }
 
-            if (ModelState.IsValid)
+            foreach (var error in result.Errors)
             {
-                await _bookService.UpdateBookAsync(book);
-                return RedirectToAction("Index");
+                if (error.Contains("name", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("Name", error);
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
             }
         }
-        else
-        {
-            ModelState.AddModelError("Name", "This name is used !!");
-        }
 
-        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(), "Id", "Name", book.AuthorId);
-        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(), "Id", "Name", book.CategoryId);
+        var book = await _bookService.GetBookForEditAsync(editedBook.Id);
+        if (book != null)
+        {
+            editedBook.ImgPath = book.ImgPath;
+        }
+        ViewBag.AuthorId = new SelectList(await _authorService.GetAuthorsAsync(forAdmin: true), "Id", "Name", editedBook.AuthorId);
+        ViewBag.CategoryId = new SelectList(await _categoryService.GetCategoriesAsync(forAdmin: true), "Id", "Name", editedBook.CategoryId);
         return View(editedBook);
     }
 
@@ -257,8 +271,8 @@ public class BooksController : Controller
             return new StatusCodeResult((int)HttpStatusCode.BadRequest);
         }
 
-        Book? book = await _bookService.GetBookByIdAsync(id.Value);
-        if (book == null)
+        var book = await _bookService.GetBookDetailsAsync(id.Value);
+        if (book == null || book.IsDeleted)
         {
             return NotFound();
         }
@@ -268,7 +282,7 @@ public class BooksController : Controller
             Id = book.Id,
             Name = book.Name,
             ISBN = book.ISBN,
-            AuthorName = book.Author?.Name ?? "Unknown",
+            AuthorName = book.AuthorName,
             ImgPath = book.ImgPath
         };
 
@@ -279,15 +293,29 @@ public class BooksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<ActionResult> DeleteConfirmed(Guid id)
     {
-        Book? book = await _bookService.GetBookByIdAsync(id);
-        if (book == null)
+        var result = await _bookService.DeleteBookAsync(id);
+        if (!result.Succeeded)
         {
             return NotFound();
         }
 
-        _fileStorageService.DeleteBookCover(book.ImgPath);
-        await _bookService.DeleteBookAsync(book.Id);
+        return RedirectToAction(nameof(Index));
+    }
 
-        return RedirectToAction("Index");
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _bookService.RestoreBookAsync(id);
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = string.Join(", ", result.Errors);
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "Book and its associated parent entities were successfully restored.";
+        }
+
+        return RedirectToAction(nameof(Index), new { status = "deleted" });
     }
 }

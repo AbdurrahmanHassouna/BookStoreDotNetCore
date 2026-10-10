@@ -12,9 +12,20 @@ public class FileStorageService : IFileStorageService
         _environment = environment;
     }
 
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp"
+    };
+
     public async Task<string> SaveBookCoverAsync(Stream fileStream, string originalFileName)
     {
-        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(originalFileName);
+        string ext = Path.GetExtension(originalFileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
+        {
+            throw new InvalidOperationException($"Invalid file extension: '{ext}'. Allowed extensions are: .jpg, .jpeg, .png, .webp.");
+        }
+
+        string uniqueFileName = $"{Guid.NewGuid()}{ext}";
         string uploadFolder = Path.Combine(_environment.WebRootPath, "book-covers", "UploadedCovers");
 
         if (!Directory.Exists(uploadFolder))

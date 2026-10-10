@@ -88,25 +88,6 @@ namespace AprilBookStore.Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "341743f0-asd2–42de-afbf-59kmkkmk72cf6",
-                            AccessFailedCount = 0,
-                            BirthDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            ConcurrencyStamp = "d73fe18c-f33f-40a8-9ec4-138c56657648",
-                            Email = "test@test.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "TEST@TEST.COM",
-                            NormalizedUserName = "ABDO",
-                            PasswordHash = "AQAAAAEAACcQAAAAEMxJlpDMRLasGdg341WRjtGWCZp94qxLX+t+bF89PWUNksJ6r9LgUc2iFd9DCBl/+A==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "2bcf0f10-cb46-45b4-8b54-a1783f1f3778",
-                            TwoFactorEnabled = false,
-                            UserName = "Abdo"
-                        });
                 });
 
             modelBuilder.Entity("AprilBookStore.Domain.Entities.Author", b =>
@@ -1030,6 +1011,105 @@ namespace AprilBookStore.Infrastructure.Migrations
                             IsVisible = true,
                             Name = "Mark Manson",
                             UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000160"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Stephen Hawking",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000161"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Neil deGrasse Tyson",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000162"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Tim Marshall",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000163"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Randall Munroe",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000164"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Emma Farrarons",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000165"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Art Spiegelman",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000166"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Brandon Stanton",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000167"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "John Berger",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000168"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Patti Smith",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000169"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Bruce Springsteen",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000170"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Millie Marotta",
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -1433,6 +1513,386 @@ namespace AprilBookStore.Infrastructure.Migrations
                             PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuantityInStock = 2,
                             UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000331"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000089"),
+                            BookStar = 4.8m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780099590088",
+                            ImgPath = "/book-covers/Science-Geography/0000001.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Sapiens: A Brief History of Humankind",
+                            Price = 12.98m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 15,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000332"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000089"),
+                            BookStar = 4.5m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781784703936",
+                            ImgPath = "/book-covers/Science-Geography/0000003.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Homo Deus: A Brief History of Tomorrow",
+                            Price = 12.90m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 8,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000333"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000160"),
+                            BookStar = 4.6m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9781473695986",
+                            ImgPath = "/book-covers/Science-Geography/0000004.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Brief Answers to the Big Questions",
+                            Price = 11.64m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 12,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000334"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000160"),
+                            BookStar = 4.7m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780857501004",
+                            ImgPath = "/book-covers/Science-Geography/0000006.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "A Brief History Of Time",
+                            Price = 9.62m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 7,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000335"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000107"),
+                            BookStar = 4.5m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781847946249",
+                            ImgPath = "/book-covers/Science-Geography/0000009.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "The Power of Habit",
+                            Price = 10.41m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 14,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000336"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000161"),
+                            BookStar = 4.4m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9780393609394",
+                            ImgPath = "/book-covers/Science-Geography/0000012.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Astrophysics for People in a Hurry",
+                            Price = 13.37m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 9,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000337"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000162"),
+                            BookStar = 4.5m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781783962433",
+                            ImgPath = "/book-covers/Science-Geography/0000013.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Prisoners of Geography",
+                            Price = 10.86m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 11,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000338"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000163"),
+                            BookStar = 4.7m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781848549562",
+                            ImgPath = "/book-covers/Science-Geography/0000014.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "What If?: Serious Scientific Answers to Absurd Hypothetical Questions",
+                            Price = 10.62m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 6,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000339"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000100"),
+                            BookStar = 4.5m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9781408708989",
+                            ImgPath = "/book-covers/Art-Photography/0000001.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Fantastic Beasts and Where to Find Them",
+                            Price = 11.05m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 8,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000340"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000164"),
+                            BookStar = 4.0m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780752265629",
+                            ImgPath = "/book-covers/Art-Photography/0000002.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "The Mindfulness Colouring Book",
+                            Price = 6.80m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 10,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000341"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000100"),
+                            BookStar = 4.2m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9781408711705",
+                            ImgPath = "/book-covers/Art-Photography/0000003.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Fantastic Beasts: The Crimes of Grindelwald",
+                            Price = 15.14m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 5,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000342"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000165"),
+                            BookStar = 4.8m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780141014081",
+                            ImgPath = "/book-covers/Art-Photography/0000005.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "The Complete MAUS",
+                            Price = 17.61m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 7,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000343"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000166"),
+                            BookStar = 4.7m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9781250038821",
+                            ImgPath = "/book-covers/Art-Photography/0000006.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Humans of New York",
+                            Price = 21.46m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 12,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000344"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000167"),
+                            BookStar = 4.3m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780141035796",
+                            ImgPath = "/book-covers/Art-Photography/0000007.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Ways of Seeing",
+                            Price = 8.36m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 6,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000345"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000170"),
+                            BookStar = 4.6m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781849941679",
+                            ImgPath = "/book-covers/Art-Photography/0000008.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Millie Marotta's Animal Kingdom",
+                            Price = 11.60m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 9,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000346"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000168"),
+                            BookStar = 4.4m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780747568766",
+                            ImgPath = "/book-covers/Art-Photography/0000011.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Just Kids",
+                            Price = 9.43m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 8,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000347"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000169"),
+                            BookStar = 4.5m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Hardback",
+                            ISBN = "9781471157790",
+                            ImgPath = "/book-covers/Art-Photography/0000012.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Born to Run",
+                            Price = 27.12m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 4,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000348"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000062"),
+                            BookStar = 4.7m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781846685828",
+                            ImgPath = "/book-covers/Science-Geography/0000008.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Being Mortal: Medicine and What Matters in the End",
+                            Price = 9.03m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 11,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000349"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000063"),
+                            BookStar = 4.3m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9781925228601",
+                            ImgPath = "/book-covers/Science-Geography/0000010.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "Gut: The Inside Story of Our Body's Most Underrated Organ",
+                            Price = 10.49m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 13,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000350"),
+                            AuthorId = new Guid("00000000-0000-0000-0000-000000000064"),
+                            BookStar = 4.6m,
+                            CategoryId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "No Description AVAILABLE",
+                            Format = "Paperback",
+                            ISBN = "9780141038872",
+                            ImgPath = "/book-covers/Science-Geography/0000011.jpg",
+                            IsDeleted = false,
+                            IsVisible = true,
+                            Name = "The Brain That Changes Itself",
+                            Price = 11.03m,
+                            PublicationDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityInStock = 7,
+                            UpdatedDate = new DateTime(2023, 12, 8, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -1647,15 +2107,6 @@ namespace AprilBookStore.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "02174cf0–9412–4cfe-afbf-59f706d72cf6",
-                            ConcurrencyStamp = "02174cf0–9412–4cfe-afbf-59f706d72cf6",
-                            Name = "SuperAdmin",
-                            NormalizedName = "SUPERADMIN"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1743,13 +2194,6 @@ namespace AprilBookStore.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = "341743f0-asd2–42de-afbf-59kmkkmk72cf6",
-                            RoleId = "02174cf0–9412–4cfe-afbf-59f706d72cf6"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>

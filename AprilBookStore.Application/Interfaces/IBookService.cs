@@ -1,17 +1,20 @@
-using AprilBookStore.Domain.Entities;
+using AprilBookStore.Application.Models.Book;
+using AprilBookStore.Application.Models.Common;
 
 namespace AprilBookStore.Application.Interfaces;
 
 public interface IBookService
 {
-    ICollection<Book> GetBooks();
-    IQueryable<Book> GetBooksQuery(string? search = null);
-    Task<Book?> GetBookByIdAsync(Guid id);
-    Book? GetBookById(Guid id);
-    Task<ICollection<Book>> SearchBooksAsync(string search);
-    Task<ICollection<Book>> FilterBooksAsync(string? name, Guid? categoryId, decimal? minPrice, decimal? maxPrice);
+    Task<PagedResult<BookListItemDto>> GetAdminBooksAsync(BookAdminFilterDto filter);
+    Task<PagedResult<BookCatalogItemDto>> GetCatalogBooksAsync(BookCatalogFilterDto filter);
+    Task<BookDetailsDto?> GetBookDetailsAsync(Guid id);
+    Task<EditBookDto?> GetBookForEditAsync(Guid id);
+    Task<ICollection<string>> SearchBooksAsync(string search, bool forAdmin = false);
     Task<bool> IsBookNameUniqueAsync(string name, Guid? excludeId = null);
-    Task CreateBookAsync(Book book);
-    Task UpdateBookAsync(Book book);
-    Task DeleteBookAsync(Guid id);
+    Task<ServiceResult> CheckBookNameAvailabilityAsync(string name, Guid? excludeId = null);
+    Task<ServiceResult> CheckBookISBNAvailabilityAsync(string isbn, Guid? excludeId = null);
+    Task<ServiceResult<Guid>> CreateBookAsync(CreateBookDto dto);
+    Task<ServiceResult> UpdateBookAsync(UpdateBookDto dto);
+    Task<ServiceResult> DeleteBookAsync(Guid id);
+    Task<ServiceResult> RestoreBookAsync(Guid id);
 }

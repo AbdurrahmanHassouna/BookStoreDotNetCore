@@ -1,5 +1,6 @@
 using AprilBookStore.Application.Interfaces;
 using AprilBookStore.Application.Models.Administration;
+using AprilBookStore.Application.Models.Common;
 using AprilBookStore.Application.Security;
 using AprilBookStore.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -36,11 +37,13 @@ public class AdministrationService : IAdministrationService
             .ToListAsync();
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> CreateRoleAsync(string roleName)
+    public async Task<ServiceResult> CreateRoleAsync(string roleName)
     {
         var identityRole = new IdentityRole(roleName);
         var result = await _roleManager.CreateAsync(identityRole);
-        return (result.Succeeded, result.Errors.Select(e => e.Description));
+        return result.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(result.Errors.Select(e => e.Description));
     }
 
     public async Task<EditRoleDto?> GetRoleForEditAsync(string id)
@@ -54,48 +57,54 @@ public class AdministrationService : IAdministrationService
             RoleName = role.Name
         };
 
-        var users = await _userManager.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            if (await _userManager.IsInRoleAsync(user, role.Name))
-            {
-                model.Users.Add(user.UserName);
-            }
-        }
+        var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
+        model.Users = usersInRole.Select(u => u.UserName!).ToList();
 
         return model;
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> UpdateRoleAsync(string id, string roleName)
+    public async Task<ServiceResult> UpdateRoleAsync(string id, string roleName)
     {
         var role = await _roleManager.FindByIdAsync(id);
         if (role == null)
         {
-            return (false, new[] { $"No role found with ID = {id}" });
+            return ServiceResult.Failed($"No role found with ID = {id}");
         }
 
         role.Name = roleName;
         var result = await _roleManager.UpdateAsync(role);
-        return (result.Succeeded, result.Errors.Select(e => e.Description));
+        return result.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(result.Errors.Select(e => e.Description));
     }
 
-    public async Task<(bool Succeeded, bool IsInUse, string? RoleName, IEnumerable<string> Errors)> DeleteRoleAsync(string id)
+    public async Task<RoleDeleteResult> DeleteRoleAsync(string id)
     {
         var role = await _roleManager.FindByIdAsync(id);
         if (role == null)
         {
-            return (false, false, null, new[] { $"No role found with ID = {id}" });
+            return RoleDeleteResult.RoleNotFound(id);
+        }
+
+        if (string.Equals(role.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return RoleDeleteResult.Failed("System roles cannot be deleted.");
         }
 
         try
         {
             var result = await _roleManager.DeleteAsync(role);
-            return (result.Succeeded, false, role.Name, result.Errors.Select(e => e.Description));
+            if (result.Succeeded)
+            {
+                return RoleDeleteResult.Success(role.Name);
+            }
+            return RoleDeleteResult.Failed(role.Name, result.Errors.Select(e => e.Description));
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Exception occurred while deleting role {RoleName} ({RoleId})", role.Name, id);
-            return (false, true, role.Name, new[] { $"{role.Name} role is in use." });
+            return RoleDeleteResult.InUse(role.Name!, $"{role.Name} role is in use.");
         }
     }
 
@@ -104,27 +113,24 @@ public class AdministrationService : IAdministrationService
         var role = await _roleManager.FindByIdAsync(roleId);
         if (role == null) return new List<UserRoleDto>();
 
-        var list = new List<UserRoleDto>();
-        var users = await _userManager.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            list.Add(new UserRoleDto
-            {
-                UserId = user.Id,
-                UserName = user.UserName,
-                IsSelected = await _userManager.IsInRoleAsync(user, role.Name)
-            });
-        }
+        var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
+        var userInRoleIds = new HashSet<string>(usersInRole.Select(u => u.Id));
 
-        return list;
+        var allUsers = await _userManager.Users.ToListAsync();
+        return allUsers.Select(user => new UserRoleDto
+        {
+            UserId = user.Id,
+            UserName = user.UserName!,
+            IsSelected = userInRoleIds.Contains(user.Id)
+        }).ToList();
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> UpdateUsersInRoleAsync(string roleId, List<UserRoleDto> userRoles)
+    public async Task<ServiceResult> UpdateUsersInRoleAsync(string roleId, List<UserRoleDto> userRoles)
     {
         var role = await _roleManager.FindByIdAsync(roleId);
         if (role == null)
         {
-            return (false, new[] { $"No role found with ID = {roleId}" });
+            return ServiceResult.Failed($"No role found with ID = {roleId}");
         }
 
         var errors = new List<string>();
@@ -133,22 +139,24 @@ public class AdministrationService : IAdministrationService
             var user = await _userManager.FindByIdAsync(item.UserId);
             if (user == null) continue;
 
-            var isInRole = await _userManager.IsInRoleAsync(user, role.Name);
+            var isInRole = await _userManager.IsInRoleAsync(user, role.Name!);
             if (item.IsSelected && !isInRole)
             {
-                var result = await _userManager.AddToRoleAsync(user, role.Name);
+                var result = await _userManager.AddToRoleAsync(user, role.Name!);
                 if (!result.Succeeded)
                     errors.AddRange(result.Errors.Select(e => e.Description));
             }
             else if (!item.IsSelected && isInRole)
             {
-                var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
+                var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
                 if (!result.Succeeded)
                     errors.AddRange(result.Errors.Select(e => e.Description));
             }
         }
 
-        return (!errors.Any(), errors);
+        return errors.Count == 0
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(errors);
     }
 
     public async Task<ICollection<UserDto>> GetUsersAsync()
@@ -163,16 +171,24 @@ public class AdministrationService : IAdministrationService
             .ToListAsync();
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> DeleteUserAsync(string id)
+    public async Task<ServiceResult> DeleteUserAsync(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
         {
-            return (false, new[] { $"No user found with ID = {id}" });
+            return ServiceResult.Failed($"No user found with ID = {id}");
+        }
+
+        var isSuperAdmin = await _userManager.IsInRoleAsync(user, "SuperAdmin");
+        if (isSuperAdmin)
+        {
+            return ServiceResult.Failed("SuperAdmin accounts cannot be deleted.");
         }
 
         var result = await _userManager.DeleteAsync(user);
-        return (result.Succeeded, result.Errors.Select(e => e.Description));
+        return result.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(result.Errors.Select(e => e.Description));
     }
 
     public async Task<EditUserDto?> GetUserForEditAsync(string id)
@@ -193,18 +209,20 @@ public class AdministrationService : IAdministrationService
         };
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> UpdateUserAsync(string id, string email, string userName)
+    public async Task<ServiceResult> UpdateUserAsync(string id, string email, string userName)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
         {
-            return (false, new[] { $"No user found with ID = {id}" });
+            return ServiceResult.Failed($"No user found with ID = {id}");
         }
 
         user.Email = email;
         user.UserName = userName;
         var result = await _userManager.UpdateAsync(user);
-        return (result.Succeeded, result.Errors.Select(e => e.Description));
+        return result.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(result.Errors.Select(e => e.Description));
     }
 
     public async Task<ICollection<UserRolesDto>> GetUserRolesAsync(string userId)
@@ -212,27 +230,24 @@ public class AdministrationService : IAdministrationService
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null) return new List<UserRolesDto>();
 
-        var roles = await _roleManager.Roles.ToListAsync();
-        var list = new List<UserRolesDto>();
-        foreach (var role in roles)
-        {
-            list.Add(new UserRolesDto
-            {
-                RoleId = role.Id,
-                RoleName = role.Name,
-                IsSelected = await _userManager.IsInRoleAsync(user, role.Name)
-            });
-        }
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRolesSet = new HashSet<string>(userRoles);
 
-        return list;
+        var roles = await _roleManager.Roles.ToListAsync();
+        return roles.Select(role => new UserRolesDto
+        {
+            RoleId = role.Id,
+            RoleName = role.Name!,
+            IsSelected = userRolesSet.Contains(role.Name!)
+        }).ToList();
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> UpdateUserRolesAsync(string userId, List<UserRolesDto> roles)
+    public async Task<ServiceResult> UpdateUserRolesAsync(string userId, List<UserRolesDto> roles)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return (false, new[] { $"No user found with ID = {userId}" });
+            return ServiceResult.Failed($"No user found with ID = {userId}");
         }
 
         var errors = new List<string>();
@@ -241,22 +256,24 @@ public class AdministrationService : IAdministrationService
             var role = await _roleManager.FindByIdAsync(item.RoleId);
             if (role == null) continue;
 
-            var isInRole = await _userManager.IsInRoleAsync(user, role.Name);
+            var isInRole = await _userManager.IsInRoleAsync(user, role.Name!);
             if (item.IsSelected && !isInRole)
             {
-                var result = await _userManager.AddToRoleAsync(user, role.Name);
+                var result = await _userManager.AddToRoleAsync(user, role.Name!);
                 if (!result.Succeeded)
                     errors.AddRange(result.Errors.Select(e => e.Description));
             }
             else if (!item.IsSelected && isInRole)
             {
-                var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
+                var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
                 if (!result.Succeeded)
                     errors.AddRange(result.Errors.Select(e => e.Description));
             }
         }
 
-        return (!errors.Any(), errors);
+        return errors.Count == 0
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(errors);
     }
 
     public async Task<UserClaimsDto?> GetUserClaimsAsync(string userId)
@@ -282,23 +299,25 @@ public class AdministrationService : IAdministrationService
         return dto;
     }
 
-    public async Task<(bool Succeeded, IEnumerable<string> Errors)> UpdateUserClaimsAsync(string userId, List<UserClaimDto> claims)
+    public async Task<ServiceResult> UpdateUserClaimsAsync(string userId, List<UserClaimDto> claims)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return (false, new[] { $"No user found with ID = {userId}" });
+            return ServiceResult.Failed($"No user found with ID = {userId}");
         }
 
         var existingClaims = await _userManager.GetClaimsAsync(user);
         var removeResult = await _userManager.RemoveClaimsAsync(user, existingClaims);
         if (!removeResult.Succeeded)
         {
-            return (false, removeResult.Errors.Select(e => e.Description));
+            return ServiceResult.Failed(removeResult.Errors.Select(e => e.Description));
         }
 
         var newClaims = claims.Select(c => new Claim(c.ClaimType, c.IsSelected ? "true" : "false"));
         var addResult = await _userManager.AddClaimsAsync(user, newClaims);
-        return (addResult.Succeeded, addResult.Errors.Select(e => e.Description));
+        return addResult.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Failed(addResult.Errors.Select(e => e.Description));
     }
 }

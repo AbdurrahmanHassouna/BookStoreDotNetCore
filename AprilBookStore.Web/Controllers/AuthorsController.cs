@@ -1,5 +1,5 @@
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Domain.Entities;
+using AprilBookStore.Application.Models.Author;
 using AprilBookStore.Web.ViewModels.Author;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +16,18 @@ public class AuthorsController : Controller
         _authorService = authorService;
     }
 
+    private bool IsAdminUser() => User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
+
     [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
-        var authors = await _authorService.GetAuthorsAsync();
-        var isAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
+        var authors = await _authorService.GetAuthorsAsync(forAdmin: IsAdminUser());
         var model = authors.Select(a => new AuthorViewModel
         {
             Id = a.Id,
             Name = a.Name,
             IsVisible = a.IsVisible,
-            BookCount = a.Books != null
-                ? (isAdmin ? a.Books.Count : a.Books.Count(b => b.IsVisible))
-                : 0,
+            BookCount = a.BookCount,
             CreatedDate = a.CreatedDate,
             UpdatedDate = a.UpdatedDate
         }).ToList();
@@ -39,17 +38,10 @@ public class AuthorsController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Details(Guid id)
     {
-        var author = await _authorService.GetAuthorByIdAsync(id);
+        var author = await _authorService.GetAuthorDetailsAsync(id, forAdmin: IsAdminUser());
         if (author == null)
         {
             return NotFound();
-        }
-
-        var isAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin");
-        var books = author.Books?.AsEnumerable() ?? Enumerable.Empty<Book>();
-        if (!isAdmin)
-        {
-            books = books.Where(b => b.IsVisible);
         }
 
         var model = new AuthorViewModel
@@ -57,16 +49,16 @@ public class AuthorsController : Controller
             Id = author.Id,
             Name = author.Name,
             IsVisible = author.IsVisible,
-            BookCount = books.Count(),
+            BookCount = author.BookCount,
             CreatedDate = author.CreatedDate,
             UpdatedDate = author.UpdatedDate,
-            Books = books.Select(b => new AuthorBookItemViewModel
+            Books = author.Books.Select(b => new AuthorBookItemViewModel
             {
                 Id = b.Id,
                 Name = b.Name,
                 Price = b.Price,
                 ImgPath = b.ImgPath,
-                CategoryName = b.Category?.Name ?? "General",
+                CategoryName = b.CategoryName,
                 BookStar = b.BookStar,
                 QuantityInStock = b.QuantityInStock,
                 IsVisible = b.IsVisible
@@ -85,18 +77,28 @@ public class AuthorsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateAuthorViewModel model)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var author = new Author
-            {
-                Name = model.Name,
-                IsVisible = model.IsVisible
-            };
-
-            await _authorService.CreateAuthorAsync(author);
-            return RedirectToAction(nameof(Index));
+            return View(model);
         }
-        return View(model);
+
+        var dto = new CreateAuthorDto
+        {
+            Name = model.Name,
+            IsVisible = model.IsVisible
+        };
+
+        var result = await _authorService.CreateAuthorAsync(dto);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            return View(model);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Edit(Guid id)
@@ -126,35 +128,45 @@ public class AuthorsController : Controller
             return NotFound();
         }
 
-        if (!ModelState.IsValid) return View(model);
-
-
-        var author = await _authorService.GetAuthorByIdAsync(id);
-        if (author == null)
+        if (!ModelState.IsValid)
         {
-            return NotFound();
+            return View(model);
         }
 
-        author.Name = model.Name;
-        author.IsVisible = model.IsVisible;
+        var dto = new UpdateAuthorDto
+        {
+            Id = model.Id,
+            Name = model.Name,
+            IsVisible = model.IsVisible
+        };
 
-        await _authorService.UpdateAuthorAsync(author);
+        var result = await _authorService.UpdateAuthorAsync(dto);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            return View(model);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Delete(Guid id)
     {
         var author = await _authorService.GetAuthorByIdAsync(id);
-
-        if (author == null) return NotFound();
-
+        if (author == null)
+        {
+            return NotFound();
+        }
 
         var model = new AuthorViewModel
         {
             Id = author.Id,
             Name = author.Name,
             IsVisible = author.IsVisible,
-            BookCount = author.Books?.Count ?? 0,
+            BookCount = author.BookCount,
             CreatedDate = author.CreatedDate,
             UpdatedDate = author.UpdatedDate
         };
@@ -172,24 +184,42 @@ public class AuthorsController : Controller
             return NotFound();
         }
 
-        try
+        var result = await _authorService.DeleteAuthorAsync(id);
+        if (!result.Succeeded)
         {
-            await _authorService.DeleteAuthorAsync(id);
-            return RedirectToAction(nameof(Index));
-        }
-        catch (InvalidOperationException ex)
-        {
-            ModelState.AddModelError("", ex.Message);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
             var model = new AuthorViewModel
             {
                 Id = author.Id,
                 Name = author.Name,
                 IsVisible = author.IsVisible,
-                BookCount = author.Books?.Count ?? 0,
+                BookCount = author.BookCount,
                 CreatedDate = author.CreatedDate,
                 UpdatedDate = author.UpdatedDate
             };
             return View("Delete", model);
         }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var result = await _authorService.RestoreAuthorAsync(id);
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = string.Join(", ", result.Errors);
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "Author restored successfully.";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 }

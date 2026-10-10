@@ -1,14 +1,17 @@
-﻿@model EditUserViewModel
+@model EditUserViewModel
 
 @{
-    ViewBag.Title = "Edit Role";
+    ViewBag.Title = "Edit User";
 }
 
-<form method="post" class="mt-3">
+<div class="container workspace-page admin-workspace py-4">
+    <header class="page-heading mb-4"><p class="page-eyebrow">Store administration</p><h1><i class="bi bi-person-gear me-2" aria-hidden="true"></i>Edit user</h1></header>
+<form method="post" class="workspace-form admin-form mt-3">
     <div class="form-group row">
         <label asp-for="Id" class="col-sm-2 col-form-label"></label>
         <div class="col-sm-10">
             <input asp-for="Id" disabled class="form-control">
+            <input type="hidden" asp-for="Id" />
         </div>
     </div><div class="form-group row">
         <label asp-for="UserName" class="col-sm-2 col-form-label"></label>
@@ -33,48 +36,48 @@
             <a asp-action="ListUsers" class="btn btn-primary">Cancel</a>
         </div>
     </div>
-
-
-    <div class="card">
-        <div class="card-header">
-            <h3>Roles</h3>
-        </div>
-        <div class="card-body">
-            @if (Model.Roles.Any())
-            {
-                foreach (var user in Model.Roles)
-                {
-                    <h5 class="card-title">@user</h5>
-                }
-            }
-            else
-            {
-                <h5 class="card-title">None at the moment</h5>
-            }
-        </div>
-        <div class="card-footer">
-            <a asp-action="EditUserRoles" asp-controller="Administration" asp-route-id="@Model.Id" class="btn btn-primary" style="width:auto">Add OR Remove Roles</a>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header">
-            <h3>Claims</h3>
-        </div>
-        <div class="card-body">
-            @if (Model.Claims.Any())
-            {
-                foreach (var user in Model.Claims)
-                {
-                    <h5 class="card-title">@user</h5>
-                }
-            }
-            else
-            {
-                <h5 class="card-title">None at the moment</h5>
-            }
-        </div>
-        <div class="card-footer">
-            <a asp-action="EditUserClaims" asp-controller="Administration" asp-route-id="@Model.Id" class="btn btn-primary" style="width:auto">Add OR Remove Cliams</a>
-        </div>
-    </div>
 </form>
+
+<div class="card mt-3">
+    <div class="card-header">
+        <h3>Roles</h3>
+    </div>
+    <div class="card-body">
+        @if (Model.Roles.Any())
+        {
+            foreach (var user in Model.Roles)
+            {
+                <h5 class="card-title">@user</h5>
+            }
+        }
+        else
+        {
+            <h5 class="card-title">None at the moment</h5>
+        }
+    </div>
+    <div class="card-footer">
+        <a asp-action="EditUserRoles" asp-controller="Administration" asp-route-id="@Model.Id" class="btn btn-primary" style="width:auto">Add OR Remove Roles</a>
+    </div>
+</div>
+<div class="card mt-3">
+    <div class="card-header">
+        <h3>Claims</h3>
+    </div>
+    <div class="card-body">
+        @if (Model.Claims.Any())
+        {
+            foreach (var user in Model.Claims)
+            {
+                <h5 class="card-title">@user</h5>
+            }
+        }
+        else
+        {
+            <h5 class="card-title">None at the moment</h5>
+        }
+    </div>
+    <div class="card-footer">
+        <a asp-action="EditUserClaims" asp-controller="Administration" asp-route-id="@Model.Id" class="btn btn-primary" style="width:auto">Add OR Remove Claims</a>
+    </div>
+</div>
+</div>

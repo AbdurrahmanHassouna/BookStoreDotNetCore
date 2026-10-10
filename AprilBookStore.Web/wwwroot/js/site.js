@@ -2,11 +2,11 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 $(function () {
-    // 1. Configure global $.ajaxSetup: attach RequestVerificationToken header for non-GET requests
+    //  Configure global $.ajaxSetup: attach RequestVerificationToken header for non-GET requests
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-                var token = $('input[name="__RequestVerificationToken"]').val();
+                const token = $('input[name="__RequestVerificationToken"]').val();
                 if (token) {
                     xhr.setRequestHeader("RequestVerificationToken", token);
                 }
@@ -21,11 +21,11 @@ $(function () {
             return;
         }
 
-        var total = 0;
-        var hasItems = false;
+        let total = 0;
+        let hasItems = false;
         $('#Cart .quantity-select').each(function () {
             hasItems = true;
-            var val = parseInt($(this).val(), 10);
+            const val = parseInt($(this).val(), 10);
             if (!isNaN(val)) {
                 total += val;
             }
@@ -39,14 +39,14 @@ $(function () {
         }
     }
 
-    // 2. Delegated handler for Add to Cart button
+    //  Delegated handler for Add to Cart button
     $(document).on('click', '.addToCartBtn', function (e) {
         e.preventDefault();
-        var $btn = $(this);
-        var bookId = $btn.data('book-id') || $btn.siblings('input[name="Id"]').val();
+        const $btn = $(this);
+        const bookId = $btn.data('book-id') || $btn.siblings('input[name="Id"]').val();
         if (!bookId) return;
 
-        var originalHtml = $btn.html();
+        const originalHtml = $btn.html();
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
 
         $.ajax({
@@ -69,11 +69,11 @@ $(function () {
         });
     });
 
-    // 3. Delegated handler for Quantity Select change
+    //  Delegated handler for Quantity Select change
     $(document).on('change', '.quantity-select', function () {
-        var $select = $(this);
-        var bookId = $select.data('book-id');
-        var quantity = $select.val();
+        const $select = $(this);
+        const bookId = $select.data('book-id');
+        const quantity = $select.val();
 
         $('#Cart').css('opacity', '0.5');
 
@@ -95,11 +95,11 @@ $(function () {
         });
     });
 
-    // 4. Delegated handler for Delete Cart Item button
+    //  Delegated handler for Delete Cart Item button
     $(document).on('click', '.delete-cart-item', function (e) {
         e.preventDefault();
-        var $btn = $(this);
-        var bookId = $btn.data('book-id');
+        const $btn = $(this);
+        const bookId = $btn.data('book-id');
 
         $('#Cart').css('opacity', '0.5');
 
@@ -120,4 +120,48 @@ $(function () {
             }
         });
     });
+    // Autocomplete for search inputs
+    function initAutocomplete(selector, endpoint) {
+        const $input = $(selector);
+        if (!$input.length) return;
+
+        $input.each(function () {
+            const widget = $(this).autocomplete({
+                minLength: 1,
+                source: function (request, response) {
+                    $.ajax({
+                        url: endpoint,
+                        data: { term: request.term },
+                        dataType: "json",
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                select: function (event, ui) {
+                    $(this).val(ui.item.value);
+                    $(this).closest('form').submit();
+                },
+                open: function () {
+                    $(this).autocomplete('widget').css({
+                        'width': $(this).outerWidth() + 'px',
+                        'max-width': $(this).outerWidth() + 'px'
+                    });
+                }
+            }).autocomplete("instance");
+
+            if (widget) {
+                widget._renderItem = function (ul, item) {
+                    const $li = $("<li>");
+                    const $wrapper = $('<div class="ui-menu-item-wrapper"><i class="bi bi-book autocomplete-icon"></i></div>');
+                    const $span = $("<span>").text(item.label);
+                    $wrapper.append($span);
+                    return $li.append($wrapper).appendTo(ul);
+                };
+            }
+        });
+    }
+
+    initAutocomplete(".SearchHome", "/Home/AutoComplete");
+    initAutocomplete(".SearchAdmin", "/Books/AutoComplete");
 });

@@ -39,6 +39,8 @@ public class EditBookViewModel
     [Display(Name = "Book Cover")]
     public IFormFile? BookCoverFile { get; set; }
 
+    public string? ImgPath { get; set; }
+
     public string? Description { get; set; }
 
     [Display(Name = "Visible")]

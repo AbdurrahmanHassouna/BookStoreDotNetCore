@@ -1,31 +1,40 @@
-﻿@{
-    ViewData["Title"] = ViewBag.ErrorTitle ?? "Error";
-    bool hasCustomError = ViewBag.ErrorTitle != null || ViewBag.ErrorMessage != null;
-    bool hasExceptionDetails = ViewBag.ExceptionMessage != null || ViewBag.StackTrace != null || ViewBag.ExceptionPath != null;
-    bool hasStatusCode = ViewBag.StatusCode != null;
+@model AprilBookStore.Web.ViewModels.Error.ErrorViewModel
+@{
+    var errorTitle = Model?.ErrorTitle ?? ViewBag.ErrorTitle as string ?? "An Error Occurred";
+    var errorMessage = Model?.ErrorMessage ?? ViewBag.ErrorMessage as string;
+    var statusCode = Model?.StatusCode ?? ViewBag.StatusCode as int?;
+    var roleId = Model?.RoleId ?? ViewBag.RoleId as string;
+    var exceptionPath = Model?.ExceptionPath ?? ViewBag.ExceptionPath as string;
+    var exceptionMessage = Model?.ExceptionMessage ?? ViewBag.ExceptionMessage as string;
+    var stackTrace = Model?.StackTrace ?? ViewBag.StackTrace as string;
+
+    ViewData["Title"] = errorTitle;
+    bool hasCustomError = !string.IsNullOrWhiteSpace(errorTitle) || !string.IsNullOrWhiteSpace(errorMessage);
+    bool hasExceptionDetails = !string.IsNullOrWhiteSpace(exceptionMessage) || !string.IsNullOrWhiteSpace(stackTrace) || !string.IsNullOrWhiteSpace(exceptionPath);
+    bool hasStatusCode = statusCode != null;
 }
 
-<div class="row justify-content-center my-4">
+<div class="row workspace-page error-page justify-content-center my-4">
     <div class="col-lg-8 col-md-10">
-        <div class="card border-danger shadow-sm">
-            <div class="card-header bg-danger text-white d-flex align-items-center justify-content-between">
-                <h4 class="mb-0">
+        <div class="card error-surface">
+            <div class="card-header workspace-card-heading workspace-card-heading--danger d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <h1 class="h3 mb-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
                         <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
                     </svg>
-                    @(ViewBag.ErrorTitle ?? "An Error Occurred")
-                </h4>
+                    @errorTitle
+                </h1>
                 @if (hasStatusCode)
                 {
-                    <span class="badge bg-light text-danger fs-6">HTTP @ViewBag.StatusCode</span>
+                    <span class="badge bg-light text-danger fs-6">HTTP @statusCode</span>
                 }
             </div>
             <div class="card-body">
                 @if (hasCustomError)
                 {
                     <div class="alert alert-danger mb-3" role="alert">
-                        <h5 class="alert-heading">@(ViewBag.ErrorTitle ?? "Notice")</h5>
-                        <p class="mb-0">@ViewBag.ErrorMessage</p>
+                        <h5 class="alert-heading">@(Model?.ErrorTitle ?? ViewBag.ErrorTitle as string ?? "Notice")</h5>
+                        <p class="mb-0">@errorMessage</p>
                     </div>
                 }
                 else if (!hasExceptionDetails)
@@ -35,12 +44,12 @@
                     </div>
                 }
 
-                @if (ViewBag.RoleId != null)
+                @if (!string.IsNullOrEmpty(roleId))
                 {
                     <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
-                        <span>Role ID: <code>@ViewBag.RoleId</code></span>
+                        <span>Role ID: <code>@roleId</code></span>
                         <div>
-                            <a asp-action="EditUsersInRole" asp-controller="Administration" asp-route-id="@ViewBag.RoleId" class="btn btn-sm btn-outline-primary me-2">Manage Users in Role</a>
+                            <a asp-action="EditUsersInRole" asp-controller="Administration" asp-route-id="@roleId" class="btn btn-sm btn-outline-primary me-2">Manage Users in Role</a>
                             <a asp-action="ListRoles" asp-controller="Administration" class="btn btn-sm btn-outline-secondary">Back to Roles</a>
                         </div>
                     </div>
@@ -55,18 +64,18 @@
                                 <h5 class="mb-0">Technical Details (Development Mode)</h5>
                             </div>
                             <div class="card-body bg-light">
-                                @if (ViewBag.ExceptionPath != null)
+                                @if (!string.IsNullOrEmpty(exceptionPath))
                                 {
-                                    <p><strong>Path:</strong> <code>@ViewBag.ExceptionPath</code></p>
+                                    <p><strong>Path:</strong> <code>@exceptionPath</code></p>
                                 }
-                                @if (ViewBag.ExceptionMessage != null)
+                                @if (!string.IsNullOrEmpty(exceptionMessage))
                                 {
-                                    <p><strong>Exception Message:</strong> <span class="text-danger">@ViewBag.ExceptionMessage</span></p>
+                                    <p><strong>Exception Message:</strong> <span class="text-danger">@exceptionMessage</span></p>
                                 }
-                                @if (ViewBag.StackTrace != null)
+                                @if (!string.IsNullOrEmpty(stackTrace))
                                 {
                                     <h6>Stack Trace:</h6>
-                                    <pre class="bg-dark text-light p-3 rounded small" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;"><code>@ViewBag.StackTrace</code></pre>
+                                    <pre class="bg-dark text-light p-3 rounded small" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;"><code>@stackTrace</code></pre>
                                 }
                             </div>
                         </div>

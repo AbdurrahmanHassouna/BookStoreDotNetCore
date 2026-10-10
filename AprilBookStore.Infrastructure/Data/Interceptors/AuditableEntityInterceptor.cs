@@ -38,12 +38,19 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             {
                 entry.Entity.UpdatedDate = utcNow;
                 entry.Property(e => e.CreatedDate).IsModified = false;
+                if (!entry.Entity.IsDeleted)
+                {
+                    entry.Entity.DeletedDate = null;
+                }
             }
             else if (entry.State == EntityState.Deleted)
             {
                 entry.State = EntityState.Modified;
-                entry.Entity.IsDeleted = true;
-                entry.Entity.DeletedDate = utcNow;
+                if (!entry.Entity.IsDeleted)
+                {
+                    entry.Entity.IsDeleted = true;
+                    entry.Entity.DeletedDate = utcNow;
+                }
                 entry.Entity.UpdatedDate = utcNow;
             }
         }

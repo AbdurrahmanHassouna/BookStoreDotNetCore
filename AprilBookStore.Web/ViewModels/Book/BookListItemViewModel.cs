@@ -28,4 +28,10 @@ public class BookListItemViewModel
 
     [Display(Name = "Category")]
     public string CategoryName { get; set; } = string.Empty;
+
+    [Display(Name = "Last Edited")]
+    public DateTime UpdatedDate { get; set; }
+
+    [Display(Name = "Created Date")]
+    public DateTime CreatedDate { get; set; }
 }

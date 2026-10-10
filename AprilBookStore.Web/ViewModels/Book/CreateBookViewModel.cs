@@ -41,5 +41,4 @@ public class CreateBookViewModel
     public IFormFile? BookCoverFile { get; set; }
 
     public string? Description { get; set; }
-    public SelectList? selectListItems { get; set; }
 }

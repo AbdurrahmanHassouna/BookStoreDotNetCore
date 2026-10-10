@@ -5,72 +5,55 @@
     var currentSearch = Context.Request.Query["search"].ToString();
 }
 
-<!-- Hero Banner -->
-<div class="p-5 mb-4 rounded-4 bg-light shadow-sm border text-center position-relative overflow-hidden">
-    <div class="container py-2">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-semibold">
-            <i class="bi bi-stars me-1"></i> Featured Collection
-        </span>
-        <h1 class="display-5 fw-bold text-dark mb-3">Discover Your Next Great Read</h1>
-        <p class="lead text-muted col-lg-8 mx-auto mb-4">
-            Browse our curated collection of bestselling novels, literature, and educational titles.
-        </p>
-        <div class="d-flex justify-content-center">
-            <form class="row g-2 justify-content-center w-100" style="max-width: 550px;" method="get" asp-action="Index">
-                <div class="col-8 col-sm-9">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search by title, author..." value="@currentSearch" />
-                    </div>
-                </div>
-                <div class="col-4 col-sm-3">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
-                </div>
-            </form>
-        </div>
+<section class="bookshop-hero mb-5" aria-labelledby="home-heading">
+    <div class="bookshop-hero__copy">
+        <p class="eyebrow"><span class="eyebrow__rule"></span> An independent bookstore</p>
+        <h1 id="home-heading">A good book<br /><em>finds its way</em> to you.</h1>
+        <p class="bookshop-hero__intro">A thoughtful collection of stories, ideas, and faraway places. Find the one that feels like yours.</p>
+        <form class="hero-search" method="get" asp-action="Index" role="search">
+            <label class="visually-hidden" for="catalog-search">Search the book collection</label>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input id="catalog-search" type="search" name="search" class="@(User.IsInRole("SuperAdmin") || User.IsInRole("Admin") ? "SearchAdmin" : "SearchHome")" placeholder="Title, author, or a favorite subject" value="@currentSearch" />
+            <button type="submit" class="btn btn-primary">Find a book</button>
+        </form>
+        <p class="hero-note"><i class="bi bi-book-half" aria-hidden="true"></i> Take your time. There’s plenty to discover.</p>
     </div>
-</div>
+    <div class="bookshop-hero__art" aria-hidden="true">
+        <div class="hero-sun"></div>
+        <div class="hero-book hero-book--back"></div>
+        <div class="hero-book hero-book--middle"></div>
+        <div class="hero-book hero-book--front"><span>APRIL<br />BOOKS</span><i></i></div>
+        <div class="hero-leaf hero-leaf--one"></div><div class="hero-leaf hero-leaf--two"></div>
+        <span class="hero-art-caption">Stories worth keeping</span>
+    </div>
+</section>
 
-<!-- Book Grid -->
-@await Html.PartialAsync("_Book", Model)
+<section aria-labelledby="collection-heading" class="catalog-section">
+    <div class="catalog-heading">
+        <div>
+            <p class="eyebrow mb-2">The collection</p>
+            <h2 id="collection-heading">@(string.IsNullOrWhiteSpace(currentSearch) ? "Books to get lost in" : $"Results for “{currentSearch}”")</h2>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(currentSearch))
+        {
+            <a asp-action="Index" class="text-link">Clear search <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+        }
+    </div>
 
-<!-- Bootstrap 5 Clean Pagination -->
-@if (Model.PageCount > 1)
-{
-    <nav aria-label="Book catalog pagination" class="d-flex justify-content-center my-4">
-        @Html.PagedListPager(Model, page => Url.Action("Index", new { page, search = currentSearch }),
-            new PagedListRenderOptions
-            {
-                LiElementClasses = new string[] { "page-item" },
-                PageClasses = new string[] { "page-link" },
-                UlElementClasses = new string[] { "pagination", "justify-content-center", "mb-0" },
-                Display = PagedListDisplayMode.IfNeeded,
-                DisplayPageCountAndCurrentLocation = false
-            })
-    </nav>
-}
+    @await Html.PartialAsync("_Book", Model)
 
-@section Scripts {
-    <script>
-        $(document).on('click', '.addToCartBtn', function () {
-            var $btn = $(this);
-            var bookId = $btn.data('book-id');
-            $.ajax({
-                url: '@Url.Action("AddToCart", "Cart")',
-                type: 'POST',
-                data: { bookId: bookId },
-                success: function (result) {
-                    $('#cartItemCount').html(result);
-                    if (typeof toastr !== 'undefined') {
-                        toastr.success('Item added to cart successfully!');
-                    }
-                },
-                error: function () {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('An error occurred while adding the item to the cart.');
-                    }
-                }
-            });
-        });
-    </script>
-}
+    @if (Model.PageCount > 1)
+    {
+        <nav aria-label="Book catalog pagination" class="d-flex justify-content-center my-5">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, search = currentSearch }),
+                new PagedListRenderOptions
+                {
+                    LiElementClasses = new string[] { "page-item" },
+                    PageClasses = new string[] { "page-link" },
+                    UlElementClasses = new string[] { "pagination", "justify-content-center", "mb-0" },
+                    Display = PagedListDisplayMode.IfNeeded,
+                    DisplayPageCountAndCurrentLocation = false
+                })
+        </nav>
+    }
+</section>

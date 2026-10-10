@@ -1,16 +1,19 @@
-﻿@model List<UserRolesViewModel>
+@model List<UserRolesViewModel>
 @{
-    ViewBag.Title = "Edit Roles'Users";
+    ViewBag.Title = "Edit User Roles";
     var userId = ViewBag.userId;
 }
 
 
-<form method="post">
+<div class="container workspace-page admin-workspace py-4">
+    <header class="page-heading mb-4"><p class="page-eyebrow">Store administration</p><h1><i class="bi bi-person-badge me-2" aria-hidden="true"></i>User roles</h1><p class="text-muted mb-0">Choose the roles assigned to this account.</p></header>
+<form method="post" class="workspace-form">
     <div class="card">
         <div class="card-header">
-            <h2>Add or remove users from this role</h2>
+            <h2>Add or remove roles for this user</h2>
         </div>
         <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger mb-2"></div>
             @for (int i = 0; i < Model.Count; i++)
             {
                 <div class="form-check m-1">
@@ -37,8 +40,9 @@
         <div class="card-footer">
             <input type="submit" value="Update" class="btn btn-primary"
                    style="width:auto" />
-            <a asp-action="ListUsers"
+            <a asp-action="EditUser" asp-route-id="@userId"
                class="btn btn-primary" style="width:auto">Cancel</a>
         </div>
     </div>
 </form>
+</div>

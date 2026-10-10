@@ -3,17 +3,19 @@
     ViewData["Title"] = "Edit Book";
 }
 
-<div class="container-lg mt-5">
+<div class="container-lg workspace-page book-admin-page mt-4 mt-lg-5">
+    <header class="workspace-heading"><p class="page-eyebrow">Bookshop administration</p><h1><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Edit book</h1></header>
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0 text-center">@ViewData["Title"]</h2>
+                <div class="card-header workspace-card-heading">
+                    <h2 class="mb-0">Catalog details</h2>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Edit" asp-controller="Books" method="post">
+                    <form asp-action="Edit" asp-controller="Books" method="post" enctype="multipart/form-data">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                         <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="ImgPath" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -86,13 +88,23 @@
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="BookCoverFile" class="form-label"></label>
-                                <div class="col-sm-10">
-                                    <input asp-for="BookCoverFile" type="file" class="form-control" />
-                                    <span asp-validation-for="BookCoverFile" class="text-danger"></span>
+                                <div class="d-flex gap-3 align-items-center">
+                                    <div class="position-relative">
+                                        <img id="coverPreview"
+                                             src="@(string.IsNullOrEmpty(Model.ImgPath) ? "/book-covers/default-book.png" : Model.ImgPath)"
+                                             alt="Book Cover"
+                                             class="img-thumbnail rounded shadow-sm"
+                                             style="width: 80px; height: 110px; object-fit: cover;" />
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <input asp-for="BookCoverFile" type="file" class="form-control" accept="image/*" id="bookCoverInput" />
+                                        <span asp-validation-for="BookCoverFile" class="text-danger"></span>
+                                        <small class="text-muted d-block mt-1">Upload a new image to replace the current cover.</small>
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
+
                         <div class="mb-3 row">
                             <label asp-for="Description" class="col-sm-2 col-form-label"></label>
                             <div class="col-sm-10">
@@ -100,6 +112,7 @@
                                 <span asp-validation-for="Description" class="text-danger"></span>
                             </div>
                         </div>
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <button type="submit" class="btn btn-primary me-md-2">Save Changes</button>
                             <a asp-action="Index" class="btn btn-secondary">Back to List</a>
@@ -113,4 +126,19 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('bookCoverInput')?.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('coverPreview');
+                    if (preview) {
+                        preview.src = event.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
 }

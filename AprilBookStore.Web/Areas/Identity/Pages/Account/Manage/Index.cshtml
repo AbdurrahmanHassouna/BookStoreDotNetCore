@@ -5,8 +5,8 @@
     ViewData["ActivePage"] = ManageNavPages.Index;
 }
 
-<div class="card border-0 shadow-sm rounded-3 p-4">
-    <h3 class="fw-bold mb-3">@ViewData["Title"]</h3>
+<div class="card account-panel p-3 p-md-4 p-lg-5">
+    <div class="account-panel-heading"><span class="account-panel-icon"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></span><div><p class="identity-eyebrow mb-1">Your details</p><h2 class="mb-0">@ViewData["Title"]</h2></div></div>
     <partial name="_StatusMessage" for="StatusMessage" />
     <form id="profile-form" method="post">
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>

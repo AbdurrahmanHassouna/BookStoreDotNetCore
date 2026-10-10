@@ -12,21 +12,22 @@
             <div class="d-flex flex-column gap-3">
                 @foreach (var item in Model.Items)
                 {
-                    <div class="card shadow-sm border-0 rounded-3 p-3">
+                    <article class="card cart-line p-3">
                         <div class="row g-3 align-items-center">
-                            <div class="col-3 col-sm-2 text-center">
+                            <div class="col-3 col-sm-2 text-center cart-line__cover">
                                 @if (!string.IsNullOrEmpty(item.ImgPath))
                                 {
-                                    <img src="@item.ImgPath" class="img-fluid rounded shadow-sm" alt="@item.BookName" style="max-height: 110px; object-fit: cover;" />
+                                    <div class="cart-cover-placeholder" aria-hidden="true"><i class="bi bi-book-half"></i></div>
+                                    <img src="@item.ImgPath" class="img-fluid cart-cover" alt="Cover of @item.BookName" onerror="this.hidden=true" />
                                 }
                                 else
                                 {
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 100px;">
-                                        <i class="bi bi-book fs-2 text-muted"></i>
+                                    <div class="cart-cover-placeholder" aria-hidden="true">
+                                        <i class="bi bi-book-half"></i>
                                     </div>
                                 }
                             </div>
-                            <div class="col-9 col-sm-6">
+                            <div class="col-9 col-sm-6 cart-line__info">
                                 <h5 class="fw-semibold mb-1 text-truncate" title="@item.BookName">@item.BookName</h5>
                                 <div class="text-muted small mb-1">
                                     <span>Unit Price: $@item.UnitPrice.ToString("N2")</span>
@@ -54,14 +55,14 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </article>
                 }
             </div>
         </div>
 
         <!-- Right column: Sticky order summary -->
         <div class="col-lg-4">
-            <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 2rem;">
+            <div class="card order-summary sticky-top">
                 <div class="card-body p-4">
                     <h5 class="card-title fw-bold mb-3">Order Summary</h5>
                     <div class="d-flex justify-content-between mb-2">
@@ -77,9 +78,11 @@
                         <span class="fs-5 fw-bold">Total</span>
                         <span class="fs-5 fw-bold text-primary">$@Model.TotalAmount.ToString("N2")</span>
                     </div>
-                    <a asp-action="ConfirmOrder" asp-controller="Orders" class="btn btn-primary w-100 py-2 fw-semibold">
-                        <i class="bi bi-lock-fill me-1"></i> Proceed to Checkout
-                    </a>
+                    <form asp-action="ConfirmOrder" asp-controller="Orders" method="post">
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-lock-fill me-1"></i> Proceed to Checkout
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

@@ -25,7 +25,7 @@ public class BookStoreContext : IdentityDbContext<ApplicationUser>, IApplication
 
     public async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> action, CancellationToken cancellationToken = default)
     {
-        using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var result = await action();
@@ -42,13 +42,6 @@ public class BookStoreContext : IdentityDbContext<ApplicationUser>, IApplication
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<Book>().HasQueryFilter(b => !b.IsDeleted);
-        modelBuilder.Entity<Author>().HasQueryFilter(a => !a.IsDeleted);
-        modelBuilder.Entity<Category>().HasQueryFilter(c => !c.IsDeleted);
-        modelBuilder.Entity<CartItem>().HasQueryFilter(c => !c.IsDeleted);
-        modelBuilder.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
-        modelBuilder.Entity<OrderItem>().HasQueryFilter(oi => !oi.IsDeleted);
 
         modelBuilder.Entity<CartItem>()
             .HasOne<ApplicationUser>()

@@ -1,15 +1,40 @@
-﻿@{
-    if (ViewBag.ErrorMessage==null)
-    {
-        <h1>no error details</h1>
-        <h1>@ViewBag.StatusCode</h1>
-    }
-    else
-    {
-        <h1>@ViewBag.ErrorMessage</h1>
-        <h1>@ViewBag.StatusCode</h1>
-
-    }
+@model AprilBookStore.Web.ViewModels.Error.ErrorViewModel
+@{
+    ViewData["Title"] = Model?.ErrorTitle ?? ViewBag.ErrorTitle ?? "Page Not Found";
+    var statusCode = Model?.StatusCode ?? ViewBag.StatusCode ?? 404;
+    var errorMessage = Model?.ErrorMessage ?? ViewBag.ErrorMessage ?? "The resource you are looking for was not found.";
+    var exceptionPath = Model?.ExceptionPath ?? ViewBag.ExceptionPath;
 }
 
-
+<div class="row workspace-page error-page justify-content-center my-4 my-lg-5">
+    <div class="col-lg-6 col-md-8 text-center">
+        <div class="card error-surface text-center">
+            <div class="card-header workspace-card-heading">
+                <p class="page-eyebrow mb-1">AprilBookStore</p><h1 class="h3 mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
+                        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>
+                    @(Model?.ErrorTitle ?? ViewBag.ErrorTitle ?? "Page Not Found")
+                </h1>
+            </div>
+            <div class="card-body p-4">
+                <p class="page-eyebrow justify-content-center mb-2">We couldn’t find that page</p>
+                <h2 class="display-1 fw-bold mb-3">@statusCode</h2>
+                <h5 class="card-title text-secondary mb-3">@errorMessage</h5>
+                @if (!string.IsNullOrEmpty(exceptionPath))
+                {
+                    <p class="text-muted small">Path: <code>@exceptionPath</code></p>
+                }
+            </div>
+            <div class="card-footer bg-light d-flex justify-content-center gap-3">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-door me-1" viewBox="0 0 16 16">
+                        <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>
+                    </svg>
+                    Back to Home
+                </a>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.history.back();">Go Back</button>
+            </div>
+        </div>
+    </div>
+</div>

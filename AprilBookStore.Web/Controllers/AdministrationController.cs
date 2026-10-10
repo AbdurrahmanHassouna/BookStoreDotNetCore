@@ -1,5 +1,6 @@
 using AprilBookStore.Application.Interfaces;
-using AprilBookStore.Application.Models.Administration;
+using AprilBookStore.Web.Mappings;
+using AprilBookStore.Web.ViewModels.Error;
 using AprilBookStore.Web.ViewModels.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,35 +11,34 @@ namespace AprilBookStore.Web.Controllers;
 public class AdministrationController : Controller
 {
     private readonly IAdministrationService _adminService;
-    private readonly ILogger<AdministrationController> _logger;
 
-    public AdministrationController(
-        IAdministrationService adminService,
-        ILogger<AdministrationController> logger)
+    public AdministrationController(IAdministrationService adminService)
     {
         _adminService = adminService;
-        _logger = logger;
     }
 
     [HttpGet]
+    [Authorize(Policy = "EditRolePolicy")]
     public IActionResult CreateRole()
     {
         return View();
     }
 
     [HttpPost]
+    [Authorize(Policy = "EditRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateRole(CreateRoleViewModel model)
     {
         if (ModelState.IsValid)
         {
-            var (succeeded, errors) = await _adminService.CreateRoleAsync(model.RoleName);
-            if (succeeded)
+            var result = await _adminService.CreateRoleAsync(model.RoleName);
+            if (result.Succeeded)
             {
-                return RedirectToAction("ListRoles");
+                return RedirectToAction(nameof(ListRoles));
             }
-            foreach (var error in errors)
+            foreach (var error in result.Errors)
             {
-                ModelState.AddModelError("", error);
+                ModelState.AddModelError(string.Empty, error);
             }
         }
         return View(model);
@@ -58,21 +58,20 @@ public class AdministrationController : Controller
         var role = await _adminService.GetRoleForEditAsync(id);
         if (role == null)
         {
-            ViewBag.ErrorMessage = $"no role with this id = {id}";
-            return View("NotFound");
+            return View("NotFound", new ErrorViewModel
+            {
+                StatusCode = 404,
+                ErrorTitle = "Role Not Found",
+                ErrorMessage = $"No role found with ID = {id}"
+            });
         }
 
-        var model = new EditRoleViewModel
-        {
-            Id = role.Id,
-            RoleName = role.RoleName,
-            Users = role.Users
-        };
-        return View(model);
+        return View(role.ToViewModel());
     }
 
     [HttpPost]
     [Authorize(Policy = "EditRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditRole(EditRoleViewModel model)
     {
         if (!ModelState.IsValid)
@@ -80,43 +79,51 @@ public class AdministrationController : Controller
             return View(model);
         }
 
-        var (succeeded, errors) = await _adminService.UpdateRoleAsync(model.Id, model.RoleName);
-        if (succeeded)
+        var result = await _adminService.UpdateRoleAsync(model.Id, model.RoleName);
+        if (result.Succeeded)
         {
-            return RedirectToAction("ListRoles");
+            return RedirectToAction(nameof(ListRoles));
         }
 
-        foreach (var error in errors)
+        foreach (var error in result.Errors)
         {
-            ModelState.AddModelError("", error);
+            ModelState.AddModelError(string.Empty, error);
         }
         return View(model);
     }
 
     [HttpPost]
     [Authorize(Policy = "DeleteRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteRole(string id)
     {
-        var (succeeded, isInUse, roleName, errors) = await _adminService.DeleteRoleAsync(id);
-        if (succeeded)
+        var result = await _adminService.DeleteRoleAsync(id);
+        if (result.Succeeded)
         {
-            return RedirectToAction("ListRoles");
+            return RedirectToAction(nameof(ListRoles));
         }
-        if (roleName == null)
+        if (result.RoleName == null)
         {
-            ViewBag.ErrorMessage = $"No role found with ID: {id}";
-            return View("NotFound");
+            return View("NotFound", new ErrorViewModel
+            {
+                StatusCode = 404,
+                ErrorTitle = "Role Not Found",
+                ErrorMessage = $"No role found with ID: {id}"
+            });
         }
-        if (isInUse)
+        if (result.IsInUse)
         {
-            ViewBag.ErrorTitle = $"{roleName} role is in use";
-            ViewBag.ErrorMessage = $"{roleName} role cannot be deleted as there are users in this role. If you want to delete this role, please remove the users from the role and then try to delete";
-            ViewBag.RoleId = id;
-            return View("Error");
+            var errorModel = new ErrorViewModel
+            {
+                ErrorTitle = $"{result.RoleName} role is in use",
+                ErrorMessage = $"{result.RoleName} role cannot be deleted as there are users in this role. If you want to delete this role, please remove the users from the role and then try to delete",
+                RoleId = id
+            };
+            return View("Error", errorModel);
         }
-        foreach (var error in errors)
+        foreach (var error in result.Errors)
         {
-            ModelState.AddModelError("", error);
+            ModelState.AddModelError(string.Empty, error);
         }
         return View("ListRoles", await _adminService.GetRolesAsync());
     }
@@ -127,36 +134,32 @@ public class AdministrationController : Controller
     {
         ViewBag.roleId = id;
         var usersInRole = await _adminService.GetUsersInRoleAsync(id);
-        var model = usersInRole.Select(u => new UserRoleViewModel
-        {
-            UserId = u.UserId,
-            UserName = u.UserName,
-            IsSelected = u.IsSelected
-        }).ToList();
-
-        return View(model);
+        return View(usersInRole.ToViewModelList());
     }
 
     [HttpPost]
     [Authorize(Policy = "EditRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUsersInRole(List<UserRoleViewModel> userRoles, string id)
     {
-        var dtoList = userRoles.Select(u => new UserRoleDto
+        if (!ModelState.IsValid)
         {
-            UserId = u.UserId,
-            UserName = u.UserName,
-            IsSelected = u.IsSelected
-        }).ToList();
-
-        var (succeeded, errors) = await _adminService.UpdateUsersInRoleAsync(id, dtoList);
-        if (!succeeded)
-        {
-            foreach (var error in errors)
-            {
-                ModelState.AddModelError("", error);
-            }
+            ViewBag.roleId = id;
+            return View(userRoles);
         }
-        return RedirectToAction("EditRole", new { id });
+
+        var result = await _adminService.UpdateUsersInRoleAsync(id, userRoles.ToDtoList());
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            ViewBag.roleId = id;
+            return View(userRoles);
+        }
+
+        return RedirectToAction(nameof(EditRole), new { id });
     }
 
     [HttpGet]
@@ -167,16 +170,18 @@ public class AdministrationController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "DeleteUserPolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteUser(string id)
     {
-        var (succeeded, errors) = await _adminService.DeleteUserAsync(id);
-        if (succeeded)
+        var result = await _adminService.DeleteUserAsync(id);
+        if (result.Succeeded)
         {
-            return RedirectToAction("ListUsers");
+            return RedirectToAction(nameof(ListUsers));
         }
-        foreach (var error in errors)
+        foreach (var error in result.Errors)
         {
-            ModelState.AddModelError("", error);
+            ModelState.AddModelError(string.Empty, error);
         }
         return View("ListUsers", await _adminService.GetUsersAsync());
     }
@@ -187,22 +192,19 @@ public class AdministrationController : Controller
         var user = await _adminService.GetUserForEditAsync(id);
         if (user == null)
         {
-            ViewBag.ErrorMessage = $"no User with this id = {id}";
-            return View("NotFound");
+            return View("NotFound", new ErrorViewModel
+            {
+                StatusCode = 404,
+                ErrorTitle = "User Not Found",
+                ErrorMessage = $"No user found with ID = {id}"
+            });
         }
 
-        var model = new EditUserViewModel
-        {
-            Id = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
-            Roles = user.Roles,
-            Claims = user.Claims
-        };
-        return View(model);
+        return View(user.ToViewModel());
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUser(EditUserViewModel model)
     {
         if (!ModelState.IsValid)
@@ -210,15 +212,15 @@ public class AdministrationController : Controller
             return View(model);
         }
 
-        var (succeeded, errors) = await _adminService.UpdateUserAsync(model.Id, model.Email, model.UserName);
-        if (succeeded)
+        var result = await _adminService.UpdateUserAsync(model.Id, model.Email, model.UserName);
+        if (result.Succeeded)
         {
-            return RedirectToAction("ListUsers");
+            return RedirectToAction(nameof(ListUsers));
         }
 
-        foreach (var error in errors)
+        foreach (var error in result.Errors)
         {
-            ModelState.AddModelError("", error);
+            ModelState.AddModelError(string.Empty, error);
         }
         return View(model);
     }
@@ -229,79 +231,71 @@ public class AdministrationController : Controller
     {
         ViewBag.userId = id;
         var userRoles = await _adminService.GetUserRolesAsync(id);
-        var model = userRoles.Select(r => new UserRolesViewModel
-        {
-            RoleId = r.RoleId,
-            RoleName = r.RoleName,
-            IsSelected = r.IsSelected
-        }).ToList();
-
-        return View(model);
+        return View(userRoles.ToViewModelList());
     }
 
     [HttpPost]
     [Authorize(Policy = "EditRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUserRoles(List<UserRolesViewModel> models, string id)
     {
-        var dtoList = models.Select(r => new UserRolesDto
+        if (!ModelState.IsValid)
         {
-            RoleId = r.RoleId,
-            RoleName = r.RoleName,
-            IsSelected = r.IsSelected
-        }).ToList();
-
-        var (succeeded, errors) = await _adminService.UpdateUserRolesAsync(id, dtoList);
-        if (!succeeded)
-        {
-            foreach (var error in errors)
-            {
-                ModelState.AddModelError("", error);
-            }
+            ViewBag.userId = id;
+            return View(models);
         }
-        return RedirectToAction("EditUser", new { id });
+
+        var result = await _adminService.UpdateUserRolesAsync(id, models.ToDtoList());
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            ViewBag.userId = id;
+            return View(models);
+        }
+
+        return RedirectToAction(nameof(EditUser), new { id });
     }
 
     [HttpGet]
+    [Authorize(Policy = "EditRolePolicy")]
     public async Task<IActionResult> EditUserClaims(string id)
     {
         var userClaimsDto = await _adminService.GetUserClaimsAsync(id);
         if (userClaimsDto == null)
         {
-            ViewBag.ErrorMessage = $"no user with this id = {id}";
-            return View("NotFound");
+            return View("NotFound", new ErrorViewModel
+            {
+                StatusCode = 404,
+                ErrorTitle = "User Not Found",
+                ErrorMessage = $"No user found with ID = {id}"
+            });
         }
 
-        var model = new UserClaimsViewModel
-        {
-            UserId = userClaimsDto.UserId,
-            Claims = userClaimsDto.Claims.Select(c => new UserClaim
-            {
-                ClaimType = c.ClaimType,
-                IsSelected = c.IsSelected
-            }).ToList()
-        };
-
-        return View(model);
+        return View(userClaimsDto.ToViewModel());
     }
 
     [HttpPost]
+    [Authorize(Policy = "EditRolePolicy")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUserClaims(UserClaimsViewModel model, string id)
     {
-        var dtoList = model.Claims.Select(c => new UserClaimDto
+        if (!ModelState.IsValid)
         {
-            ClaimType = c.ClaimType,
-            IsSelected = c.IsSelected
-        }).ToList();
-
-        var (succeeded, errors) = await _adminService.UpdateUserClaimsAsync(id, dtoList);
-        if (succeeded)
-        {
-            return RedirectToAction("EditUser", new { id });
+            return View(model);
         }
 
-        foreach (var error in errors)
+        var result = await _adminService.UpdateUserClaimsAsync(id, model.ToDtoList());
+        if (result.Succeeded)
         {
-            ModelState.AddModelError("", error);
+            return RedirectToAction(nameof(EditUser), new { id });
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error);
         }
         return View(model);
     }
